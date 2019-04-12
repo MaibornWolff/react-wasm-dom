@@ -51,8 +51,100 @@ Solange das [Web IDL Bindings Proposal](https://github.com/WebAssembly/webidl-bi
 
 [wasm-pack](https://rustwasm.github.io/wasm-pack/) bietet uns einen schnellen Einstieg in Rust + WASM, also werden wir dies verwenden.
 
-Erstellen wir unsere Library:
+Nachdem wir wasm-pack installiert haben, können wir unsere Library erstellen:
 
 ```bash
 $ npm init rust-webpack react-wasm
 ```
+
+Wenn man zunächst in die Git History schaut, findet man dort alles mögliche von dem von uns kopiertem Projekt.
+Eigentlich wollen wir das nicht, deswegen überschreiben wir die Git History mit unserem initialem Commit:
+
+```bash
+$ rm -rf .git
+$ git init
+$ git add .
+$ git commit -m "initial commit"
+```
+
+Mit Hilfe von `npm run start` können wir unser Projekt kompilieren und auf Port 8080 begutachten.
+Die erste Kompilierung dauert ziemlich lange, also muss man etwas warten.
+
+Als nächstes wollen wir JSX einbinden, also müssen wir alle Dependencies installieren um dies zu tun.
+TypeScript werden wir auch noch verwenden:
+
+```bash
+$ npm i -D @babel/core @babel/plugin-syntax-dynamic-import @babel/plugin-transform-react-jsx @babel/plugin-transform-typescript @babel/polyfill @babel/preset-env babel-loader typescript
+```
+
+Jetzt können wir unsere Webpack Config updaten.
+Hier steckt schon ziemlich viel Wissen drin.
+Die einzelnen Blöcke sind in den jeweiligen Abschnitten erklärt mit den Kommentaren.
+
+```js
+  ...
+  entry: "./js/index.ts",
+  ...
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: "babel-loader",
+            query: {
+              babelrc: false,
+              presets: [
+                [
+                  "@babel/env",
+                  {
+                    // Dies dient dafür genau die Polyfills bereitzustellen,
+                    // die von unserer Library verwendet werden für genau die Browser,
+                    // die WASM ausführen können.
+                    targets: {
+                      browsers: [
+                        "edge >= 17",
+                        "ff >= 61",
+                        "chrome >= 63",
+                        "safari >= 11.1"
+                      ]
+                    },
+                    useBuiltIns: "usage",
+                    modules: false
+                  }
+                ]
+              ],
+              plugins: [
+                [
+                  "@babel/plugin-transform-typescript",
+                  {
+                    // Preserve custom JSX Pragma
+                    isTSX: true,
+                    jsxPragma: "h"
+                  }
+                ],
+                // WASM-Dateien müssen dynamisch geladen werden.
+                // Sie können nicht im initialem Entrypoint unserer App enthalten sein
+                "@babel/plugin-syntax-dynamic-import",
+                [
+                  "@babel/plugin-transform-react-jsx",
+                  {
+                    // Preserve JSX/TSX
+                    pragma: "h",
+                    pragmaFrag: "Fragment"
+                  }
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
+```
+
+Mit Pragma ist unsere Custom `React.createElement`-Funktion gemeint.
+Damit Babel hier nicht den Standard verwendet, müssen wir konfigurieren wie wir diese Funktion bei uns nennen, "h" in diesem Fall.
+
+Ein erneutes Ausführen von `npm run start` ist weiterhin erfolgreich, diesmal aber powered by Babel.
