@@ -5,23 +5,73 @@ const dist = path.resolve(__dirname, "dist");
 const WasmPackPlugin = require("@wasm-tool/wasm-pack-plugin");
 
 module.exports = {
-  entry: "./js/index.js",
+  entry: "./js/index.ts",
   output: {
     path: dist,
     filename: "bundle.js"
   },
   devServer: {
-    contentBase: dist,
+    contentBase: dist
   },
   plugins: [
     new HtmlWebpackPlugin({
-      template: 'index.html'
+      template: "index.html"
     }),
 
     new WasmPackPlugin({
-      crateDirectory: path.resolve(__dirname, "crate"),
+      crateDirectory: path.resolve(__dirname, "crate")
       // WasmPackPlugin defaults to compiling in "dev" profile. To change that, use forceMode: 'release':
       // forceMode: 'release'
-    }),
-  ]
+    })
+  ],
+  module: {
+    rules: [
+      {
+        test: /\.tsx?$/,
+        exclude: /node_modules/,
+        use: [
+          {
+            loader: "babel-loader",
+            query: {
+              babelrc: false,
+              presets: [
+                [
+                  "@babel/env",
+                  {
+                    targets: {
+                      browsers: [
+                        "edge >= 17",
+                        "ff >= 61",
+                        "chrome >= 63",
+                        "safari >= 11.1"
+                      ]
+                    },
+                    useBuiltIns: "usage",
+                    modules: false
+                  }
+                ]
+              ],
+              plugins: [
+                [
+                  "@babel/plugin-transform-typescript",
+                  {
+                    isTSX: true,
+                    jsxPragma: "h"
+                  }
+                ],
+                "@babel/plugin-syntax-dynamic-import",
+                [
+                  "@babel/plugin-transform-react-jsx",
+                  {
+                    pragma: "h",
+                    pragmaFrag: "Fragment"
+                  }
+                ]
+              ]
+            }
+          }
+        ]
+      }
+    ]
+  }
 };
