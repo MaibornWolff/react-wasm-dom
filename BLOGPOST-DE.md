@@ -70,6 +70,8 @@ $ git commit -m "initial commit"
 Mit Hilfe von `npm run start` können wir unser Projekt kompilieren und auf Port 8080 begutachten.
 Die erste Kompilierung dauert ziemlich lange, also muss man etwas warten.
 
+### JSX Transpilation
+
 Als nächstes wollen wir JSX einbinden, also müssen wir alle Dependencies installieren um dies zu tun.
 TypeScript werden wir auch noch verwenden:
 
@@ -83,7 +85,7 @@ Die einzelnen Blöcke sind in den jeweiligen Abschnitten erklärt mit den Kommen
 
 ```js
   ...
-  entry: "./js/index.ts",
+  entry: "./src/js/index.ts",
   ...
   module: {
     rules: [
@@ -146,5 +148,64 @@ Die einzelnen Blöcke sind in den jeweiligen Abschnitten erklärt mit den Kommen
 
 Mit Pragma ist unsere Custom `React.createElement`-Funktion gemeint.
 Damit Babel hier nicht den Standard verwendet, müssen wir konfigurieren wie wir diese Funktion bei uns nennen, "h" in diesem Fall.
+In der `index.ts`-Datei deklarieren wir "h" folgendermaßen:
+
+```ts
+function h<P, S>(
+  type: Component<P, S>,
+  props: P,
+  ...children: JSX.Element[]
+): JSX.Element {
+  return {
+    type,
+    props: props || {},
+    children
+  };
+}
+```
 
 Ein erneutes Ausführen von `npm run start` ist weiterhin erfolgreich, diesmal aber powered by Babel.
+
+Um zu verstehen was Babel mit JSX macht und wie wir das ganze zu WASM bringen können, müssen wir uns einmal anschauen wie unser Code transpiliert wird. Dafür gibt es [hier](https://babeljs.io/repl/#?babili=false&browsers=&build=&builtIns=false&spec=false&loose=false&code_lz=PQKhAIAECsGcA9wAtwmAKHQMwK4DsBjAFwEsB7PZACiIE8AHAUwBpx6AnM-2VgOn4JISAGwAm7RngCU4AN7pw4CURztK8xYrpNmCzRy6wAXG07dwAHwtyAvrs3hBI8ZL02A3OhuYCFWEXAAQXp6cABecCoDbhkwgD5wAB5REgA3ONlTQ15SImFGcBtE4BT0z3RE4NDc_LCAcgAJRmFhMnAAdTJ2MTrwYDj3IA&debug=false&forceAllTransforms=false&shippedProposals=false&circleciRepo=&evaluate=false&fileSize=false&timeTravel=false&sourceType=module&lineWrap=true&presets=react%2Cstage-2%2Ctypescript&prettier=false&targets=&version=7.4.3&externalPlugins=) ein minimales Beispiel:
+
+```tsx
+/** @jsx h */
+function h(type, props, ...children) {
+  return {
+    type,
+    props: props || {},
+    children
+  };
+}
+
+const App = props => <div>{props.title}</div>;
+
+<App title="Hello World" />;
+```
+
+wird zu
+
+```jsx
+/** @jsx h */
+function h(type, props, ...children) {
+  return {
+    type,
+    props: props || {},
+    children
+  };
+}
+
+const App = props => h("div", null, props.title);
+
+h(App, {
+  title: "Hello World"
+});
+```
+
+Jedes JSX-Element besteht aus einem `type`, `props` und `children`.
+
+`type` ist im Falle einer Component entweder eine Class oder eine Function.
+Wenn hingegen ein IntrinsicElement gerendert wird, so ist es ein String, wie z.B. bei "div".
+`props` ist das Property-Objekt und `children` sind die von den JSX-Tags umschlossenen Elemente.
+
+Letztendlich wird aus dem JSX-Element also einfach nur ein Aufruf aus "h" generiert und dessen return-Value können wir an WASM übergeben um es zu rendern.
