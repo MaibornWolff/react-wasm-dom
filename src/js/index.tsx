@@ -1,9 +1,9 @@
 import App from "./App";
 import Component from "./Component";
 
-import("../../crate/pkg/rust_webpack").then(module => module.render(<App />));
+import("../../pkg/react_wasm").then(module => module.render(<App />));
 
-function h<P, S>(
+function h<P extends Record<string, unknown>, S extends Record<string, unknown>>(
   type: Component<P, S>,
   props: P,
   ...children: JSX.Element[]
