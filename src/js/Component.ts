@@ -14,4 +14,8 @@ export default class Component<
   public props: P & ComponentProps;
 
   protected state: S;
+
+  public render(): JSX.Element {
+    throw new Error();
+  }
 }

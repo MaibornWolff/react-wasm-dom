@@ -2,7 +2,7 @@ declare namespace JSX {
   interface Element<P = any> {
     type: any;
     props: P;
-    children: JSX.Element[];
+    children: Children;
     ref?: any;
   }
 
@@ -15,8 +15,18 @@ declare namespace JSX {
   }
 
   interface IntrinsicElements {
-    div: {
-      children: string;
-    };
+    div: IntrinsicElement;
+    p: IntrinsicElement;
+    span: IntrinsicElement;
+    h1: IntrinsicElement;
+    h2: IntrinsicElement;
+    h3: IntrinsicElement;
+    h4: IntrinsicElement;
+  }
+
+  type Children = (JSX.Element | string)[] | (JSX.Element | string);
+
+  interface IntrinsicElement {
+    children: Children;
   }
 }
