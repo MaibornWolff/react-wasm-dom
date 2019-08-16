@@ -16,13 +16,10 @@ Ich möchte in diesem Blogartikel die Möglichkeit aufzeigen dies in Rust und mi
 Viele Programmiersprachen bieten die Möglichkeit an eine Virtual DOM Library mit Hilfe von WASM zu verwenden.
 Eine Übersicht findet man [hier](https://github.com/mbasso/awesome-wasm#web-frameworks-libraries).
 
-All diese Sprachen sind allerdings darauf fokusiert ihre eigene API anzubieten.
-Das hat den Nachteil, dass man diese erst lernen muss und auch, dass man die Programmiersprache beherrscht.
-
-JSX hingegen ist ein weit verbreitetes Format und JavaScript ist eine der meist genutzten Programmiersprachen.
-Wenn man eine Virtual DOM Library bauen würde mit der exakt gleichen Syntax wie React würde man so viel mehr Leute erreichen.
-Dass im Hintergrund alles in WASM läuft, muss den Nutzer ja nicht interessieren.
-Wichtig ist vor allem, dass es funktioniert und dass man damit produktiv ist.
+All diese Libraries haben die Gemeinsamkeit, dass man gezwungenermaßen in der Programmiersprache seine GUI programmieren muss, in der auch die Library geschrieben ist.
+Für Entwickler, die diese Sprache beherrschen ist das vorteilhaft, da diese dadurch befähigt werden auch ihre eigenen Web-Apps zu entwickeln in ihrer bevorzugten Programmiersprache.
+Was ich persönlich vermisse ist eine Virtual DOM Library, die zwar in WASM läuft, welche aber eine JavaScript API bereit stellt.
+Womöglich extra eine andere Programmiersprache zu lernen um die Performancegewinne von WASM zu erhalten, klingt nach sehr viel Aufwand und es gibt schon extrem gute Lösungen in JavaScript, mit denen es einfach ist eine Virtual DOM zu beschreiben.
 
 ## JSX
 
@@ -33,7 +30,7 @@ Man kann seine eigene Virtual DOM mit JSX implementieren, das bekannteste Beispi
 Preact versucht so gut es geht ein Drop-In-Replacement für React zu sein.
 Das klappt mehr oder weniger gut und hängt vor allem mit der Mächtigkeit von React zusammen.
 
-Um zu verstehen wie man JSX für sich verwenden kann, muss man zunächst wissen was mit dem JSX im Transpilierungsschritt geschieht.
+Um zu verstehen wie man JSX verwenden kann, muss man zunächst wissen was mit dem JSX im Transpilierungsschritt geschieht.
 Babel bietet hier ein [Plugin](https://babeljs.io/docs/en/babel-plugin-transform-react-jsx) an.
 Auf der Seite sieht man auch mehrere Beispiele wie JSX zu JavaScript transpiliert wird.
 Im Standardfall von React wird hier einfach nur die `React.createElement`-Funktion aufgerufen.
@@ -85,7 +82,7 @@ Die einzelnen Blöcke sind in den jeweiligen Abschnitten erklärt mit den Kommen
 
 ```js
   ...
-  entry: "./src/js/index.ts",
+  entry: "./src/js/index.tsx",
   ...
   module: {
     rules: [
@@ -209,3 +206,137 @@ Wenn hingegen ein IntrinsicElement gerendert wird, so ist es ein String, wie z.B
 `props` ist das Property-Objekt und `children` sind die von den JSX-Tags umschlossenen Elemente.
 
 Letztendlich wird aus dem JSX-Element also einfach nur ein Aufruf aus "h" generiert und dessen return-Value können wir an WASM übergeben um es zu rendern.
+
+### Bootstrapping
+
+[wasm-bindgen](https://rustwasm.github.io/docs/wasm-bindgen/) ist eine Library, mit der wir JavaScript und Rust einfach miteinander verknüpfen können. Durch prozedurale Macro-Annotationen in Rust werden automatisch JavaScript exports oder imports erzeugt.
+
+Zunächst werden wir ein JSX Struct definieren, welches von JavaScript zu Rust gegeben werden kann wie folgt:
+
+```rust
+#[wasm_bindgen]
+extern "C" {
+    pub type Jsx;
+
+    #[wasm_bindgen(method, getter)]
+    pub fn props(this: &Jsx) -> js_sys::Object;
+
+    #[wasm_bindgen(method, getter)]
+    pub fn children(this: &Jsx) -> js_sys::Array;
+
+    #[wasm_bindgen(method, getter, js_name=type)]
+    pub fn jsx_type(this: &Jsx) -> JsValue;
+}
+```
+
+Der Typ Jsx ist genau der Rückgabewert, den man von der h-Funktion erhält. Mit diesem Wert bootstrappen wir unsere Anwendung innerhalb von Rust, indem wir eine `render`-Funktion in Rust definieren und exportieren.
+
+```rust
+#[wasm_bindgen]
+pub fn render(jsx: &Jsx) -> Result<(), JsValue> {
+    let element = render_jsx(jsx)?;
+    let window = web_sys::window().expect("no global `window` exists");
+    let document = window.document().expect("should have a document on window");
+    let body = document.body().expect("document should have a body");
+    body.append_child(&element)?;
+    Ok(())
+}
+
+fn render_jsx(jsx: &Jsx) -> Result<web_sys::Element, JsValue> {
+    // ...
+}
+```
+
+JsxType ist ein Enum um jegliche Arten von rendering zu ermöglichen.
+React unterstützt zum einen Klassenkomponenten aber auch funktionale Komponenten.
+IntrinsicElements sind die Elemente, die im DOM gerendert werden können und als String übergeben werden.
+
+```rust
+pub enum JsxType {
+    Component(js_sys::Function),
+    Functional(js_sys::Function),
+    Intrinsic(String),
+}
+```
+
+Durch die Annotation `#[wasm_bindgen]` wird die render-Funktion in JavaScript exportiert und unsere App kann somit gebootstrapped werden:
+
+```js
+// index.tsx
+
+import("../../pkg/react_wasm").then(module => {
+  try {
+    module.render(<App />);
+  } catch (err) {
+    console.error(err);
+  }
+});
+```
+
+### DOM Rendering
+
+Nun kommen wir zum eigentlichem Teil unserer Anwendung.
+Den aus JavaScript erhaltenen JSX-Tree müssen wir nun in der DOM rendern.
+Die Funktion `render_jsx` liefert hierfür ein Element, wenn alles gut läuft, ansonsten bekommen wir ein Fehlerobjekt, welches in die Konsole geschrieben wird.
+
+```rust
+fn render_jsx(jsx: &Jsx) -> Result<web_sys::Element, JsValue> {
+    match jsx.jsx_type().try_into()? {
+        JsxType::Component(constructor) => {
+            let component: Component = // ...
+            render_jsx(&component.render())
+        }
+        JsxType::Functional(function) => {
+            let jsx: Jsx = // ...
+            render_jsx(&jsx)
+        }
+        JsxType::Intrinsic(intrinsic) => {
+            let window = web_sys::window().expect("no global `window` exists");
+            let document = window.document().expect("should have a document on window");
+            let element = document.create_element(&intrinsic)?;
+
+            jsx.children()
+                .for_each(&mut |val: JsValue, _index, _array| {
+                  // Hier werden die HTMLElemente oder Strings in das DOM gerendert.
+                });
+            Ok(element)
+        }
+    }
+}
+
+impl TryInto<JsxType> for JsValue {
+    type Error = JsValue;
+
+    fn try_into(self) -> Result<JsxType, Self::Error> {
+        if self.is_function() {
+            let function: js_sys::Function = self.unchecked_into();
+            if Jsx::is_constructor(&function) {
+                Ok(JsxType::Component(function))
+            } else {
+                Ok(JsxType::Functional(function))
+            }
+        } else if let Some(intrinsic) = self.as_string() {
+            Ok(JsxType::Intrinsic(intrinsic))
+        } else {
+            Err("bad jsx value".into())
+        }
+    }
+}
+
+impl Jsx {
+    fn is_constructor(function: &js_sys::Function) -> bool {
+        match js_sys::Reflect::construct(function, &js_sys::Array::new()) {
+            Ok(_) => true,
+            Err(_) => false,
+        }
+    }
+}
+```
+
+Wer noch nicht viel mit Rust gearbeitet hat, dem wird vorheriger Code etwas fremdlich erscheinen.
+Der `?`-Operator ist eine elegante Möglichkeit den Wert eines Results zu lesen oder im Fehlerfall den Fehler weiter nach oben zu reichen.
+
+`TryInto` ist ein Trait, den man zur Konvertierung zwischen Datentypen verwenden kann.
+Hier wird versucht einen beliebigen Wert aus JavaScript in den passenden JsxType zu konvertieren um darauf Pattern Matching anzuwenden.
+
+Durch JavaScript Reflection testen wir, ob es sich bei der JavaScript-Funktion um einen Konstruktor handelt oder nicht.
