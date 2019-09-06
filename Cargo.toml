@@ -42,6 +42,9 @@ features = [
 [features]
 default = ["console_error_panic_hook"]
 
+[package.metadata.wasm-pack.profile.release]
+wasm-opt = false
+
 [profile]
 [profile.release]
 debug = false
