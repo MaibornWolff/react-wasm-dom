@@ -266,16 +266,16 @@ Durch die Annotation `#[wasm_bindgen]` wird die render-Funktion in JavaScript ex
 
 import("../../pkg/react_wasm").then(module => {
   try {
-    module.render(<App />);
+    module.render(<App />); // Dies ist unsere von WASM exportierte Funktion: `fn render(jsx: &Jsx)`
   } catch (err) {
     console.error(err);
   }
 });
 ```
 
-### DOM Rendering
+## DOM Rendering
 
-Nun kommen wir zum eigentlichem Teil unserer Anwendung.
+Nun kommen wir zum eigentlichen Teil unserer Anwendung.
 Den aus JavaScript erhaltenen JSX-Tree müssen wir nun in der DOM rendern.
 Die Funktion `render_jsx` liefert hierfür ein Element, wenn alles gut läuft, ansonsten bekommen wir ein Fehlerobjekt, welches in die Konsole geschrieben wird.
 
@@ -309,6 +309,7 @@ impl TryInto<JsxType> for JsValue {
 
     fn try_into(self) -> Result<JsxType, Self::Error> {
         if self.is_function() {
+            // Entweder ist der Typ ein Constructor im Fall einer Class Component.
             let function: js_sys::Function = self.unchecked_into();
             if Jsx::is_constructor(&function) {
                 Ok(JsxType::Component(function))
@@ -338,5 +339,120 @@ Der `?`-Operator ist eine elegante Möglichkeit den Wert eines Results zu lesen 
 
 `TryInto` ist ein Trait, den man zur Konvertierung zwischen Datentypen verwenden kann.
 Hier wird versucht einen beliebigen Wert aus JavaScript in den passenden JsxType zu konvertieren um darauf Pattern Matching anzuwenden.
-
 Durch JavaScript Reflection testen wir, ob es sich bei der JavaScript-Funktion um einen Konstruktor handelt oder nicht.
+
+### Functional Component Rendering
+
+Das rendering eine Functional Component ist ziemlich einfach, da die Funktion einfach nur aufgerufen und dessen Rückgabewert erneut JSX liefert, welches man erneut rendern muss.
+
+```rust
+  // ...
+  JsxType::Functional(function) => {
+      let jsx: Jsx = function
+          .call0(&JsValue::NULL)
+          .expect("Functional Component initialization failed")
+          .unchecked_into();
+      render_jsx(&jsx)
+  }
+```
+
+`#call0` ist eine JavaScript Bindung-Funktion, welche durch den Crate `js-sys` bereitgestellt wird um eine Funktion ohne Parameter aufzurufen. Der Wert für das `this`-Objekt muss dennoch übergeben werden, in unserem Fall `null`.
+Mit `#unchecked_into` machen wir eine zero-cost Konvertierung zum JSX-Typ, welchen wir vorher definiert haben.
+Wir ändern hier nicht den Prototype des Objekts, sondern sagen nur welche Struktur er hat und könnten somit per Duct-Typing die Werte des Objekts auslesen.
+
+### Class Component Rendering
+
+Das Rendering einer Klasse ist fast gleich, nur dass der Konstruktor per Reflection aufgerufen werden muss.
+
+```rust
+    // ...
+    JsxType::Component(constructor) => {
+        let component: Component = Reflect::construct(&constructor, &Array::new())
+            .expect("Component constructor failed")
+            .unchecked_into();
+        render_jsx(&component.render())
+    }
+```
+
+### Intrinsic Element Rendering
+
+Intrinsic Elements sind alle Objekte, die in die DOM gerendert werden.
+Entweder handelt es sich dabei um ein HTMLElement oder um einen String.
+
+```rust
+    // ...
+    JsxType::Intrinsic(intrinsic) => {
+        let element = document.create_element(&intrinsic)?;
+
+        jsx.children()
+            .for_each(&mut |val: JsValue, _index, _array| {
+                // Dynamischer Typcheck, ob es sich um einen JavaScript String handelt.
+                match val.dyn_ref::<JsString>() {
+                    Some(js_string) => {
+                        // Der String wird einfach innerhalb des HTMLElements gerendert.
+                        // Element#insert_adjacent_html packt den String tatsächlich in die DOM.
+                        element
+                            .insert_adjacent_html("beforeend".into(), &String::from(js_string))
+                            .expect("insert_adjacent_html");
+                    }
+                    None => {
+                        // Kein String, muss also als Jsx behandelt und gerendert werden.
+                        let jsx = val.unchecked_ref::<Jsx>();
+                        let child_element = render_jsx(jsx).unwrap();
+                        element
+                            .insert_adjacent_element("beforeend".into(), &child_element)
+                            .expect("insert_adjacent_element");
+                    }
+                };
+            });
+        Ok(element)
+    }
+```
+
+## Release Build Optimierungen
+
+Indem wir in der `Cargo.toml` einen Release-Abschnitt hinzufügen, können wir zusätzlich unser Build optimieren.
+Auf was man optimiert, also Größe der Dateien oder Performance, ist Geschmackssache.
+Im Falle von Web Applications würde ich als Daumenregel auf Größe optimieren, um so die initiale Ladezeit zu verkürzen.
+Die Runtime-Performance sollte ohnehin gut genug sein.
+
+```toml
+[profile]
+[profile.release]
+# Link-Time Optimization aktivieren.
+lto = true
+# Paralleles Kompilieren wird hiermit verhindert um besseres Linking zu ermöglichen.
+codegen-units = 1
+# Optimiere auf Größe.
+opt-level = "z"
+```
+
+Wir haben inzwischen eine funktionierende App und können diese kompilieren und die statischen Dateien hosten.
+Wir machen also ein Webpack Build und hosten den `/dist`-Ordner.
+
+```bash
+# Release Build kompilieren.
+yarn webpack -p
+
+# Static File Zerver installieren und App hosten.
+# sfz ist ein einfaches Command Line Tool um statische Dateien zu hosten.
+cargo install sfz
+sfz ./dist -r
+```
+
+Das Ergebnis sieht man hier:
+
+![request](./request.png)
+
+Bei `bundle.js` handelt es sich um unser Entrypoint Bundle.
+Dieses tut asynchron unsere WebAssembly App inklusive dessen JavaScript Bindings nachladen.
+Mit gerade mal `44,68KB / 18,7KB gzipped` wird unsere App ausgeliefert.
+Natürlich ist das nicht sonderlich repräsentativ, sondern es zeigt hauptsächlich inwieweit die Rust Dependencies zur WebAssembly App kompiliert werden.
+
+## Nächste Schritte
+
+Die App bietet bisher keinerlei Möglichkeiten diese interaktiv zu machen, da wir noch keine Lifecycle-Methoden implementiert haben.
+Es fehlen sichlich noch ein paar Edge-Cases, die ich noch nicht beachtet habe beim Rendering, welche noch unterstützt werden müssen.
+Hierzu zählen auch definitiv Jsx-Fragments.
+
+Ansonsten haben wir einen funktionalen statischen Jsx-Renderer, welchen man zum einen für Server-side Rendering erweitern könnte, indem man statt einem Element das ganze als String rendert, zum anderen muss man ihn noch mit den Lifecycle-Methoden erweitern, sodass man nicht nur statischen Content rendern kann.
