@@ -6,21 +6,23 @@ use super::jsx::{Jsx, JsxType};
 use js_sys::{Array, JsString, Reflect};
 use std::convert::TryInto;
 use wasm_bindgen::JsCast;
-use web_sys::Element;
+use web_sys::{Document, Element};
 
 #[wasm_bindgen]
 #[allow(dead_code)]
 pub fn render(jsx: &Jsx) -> Result<(), JsValue> {
-    let element = render_jsx(jsx)?;
     let window = web_sys::window().expect("no global `window` exists");
     let document = window.document().expect("should have a document on window");
+    let element = render_jsx(jsx, &document)?;
+
     let body = document.body().expect("document should have a body");
     body.append_child(&element)?;
+
     web_sys::console::log_1(&element);
     Ok(())
 }
 
-fn render_jsx(jsx: &Jsx) -> Result<Element, JsValue> {
+fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Element, JsValue> {
     web_sys::console::log_2(&"RENDER".into(), jsx);
     match jsx.jsx_type().try_into()? {
         JsxType::Component(constructor) => {
@@ -28,7 +30,7 @@ fn render_jsx(jsx: &Jsx) -> Result<Element, JsValue> {
                 .expect("Component constructor failed")
                 .unchecked_into();
             web_sys::console::log_2(&"CLASS COMPONENT".into(), &component);
-            render_jsx(&component.render())
+            render_jsx(&component.render(), document)
         }
         JsxType::Functional(function) => {
             let jsx: Jsx = function
@@ -36,12 +38,10 @@ fn render_jsx(jsx: &Jsx) -> Result<Element, JsValue> {
                 .expect("Functional Component initialization failed")
                 .unchecked_into();
             web_sys::console::log_2(&"FUNCTIONAL COMPONENT".into(), &jsx);
-            render_jsx(&jsx)
+            render_jsx(&jsx, document)
         }
         JsxType::Intrinsic(intrinsic) => {
             web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
-            let window = web_sys::window().expect("no global `window` exists");
-            let document = window.document().expect("should have a document on window");
             let element = document.create_element(&intrinsic)?;
 
             jsx.children()
@@ -54,7 +54,7 @@ fn render_jsx(jsx: &Jsx) -> Result<Element, JsValue> {
                         }
                         None => {
                             let jsx = val.unchecked_ref::<Jsx>();
-                            let child_element = render_jsx(jsx).unwrap();
+                            let child_element = render_jsx(jsx, document).unwrap();
                             element
                                 .insert_adjacent_element("beforeend".into(), &child_element)
                                 .expect("insert_adjacent_element");
