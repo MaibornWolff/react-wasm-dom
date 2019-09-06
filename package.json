@@ -6,7 +6,7 @@
   "license": "(MIT OR Apache-2.0)",
   "scripts": {
     "start": "webpack-dev-server -d",
-    "build": "webpack"
+    "build": "webpack -p"
   },
   "bin": {
     "create-rust-webpack": ".bin/create-rust-webpack.js"
