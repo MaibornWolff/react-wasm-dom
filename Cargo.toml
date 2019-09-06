@@ -41,3 +41,10 @@ features = [
 
 [features]
 default = ["console_error_panic_hook"]
+
+[profile]
+[profile.release]
+debug = false
+lto = true
+codegen-units = 1
+opt-level = "z"
