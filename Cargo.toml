@@ -14,6 +14,7 @@ crate-type = ["cdylib"]
 path = "src/rust/lib.rs"
 
 [dependencies]
+html5ever = "*"
 js-sys = "0.3"
 wasm-bindgen = "0.2"
 

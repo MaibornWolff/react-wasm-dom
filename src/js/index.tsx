@@ -3,7 +3,8 @@ import Component from "./Component";
 
 import("../../pkg/react_wasm").then(module => {
   try {
-    module.render(<App />)
+    const res = module.renderToString(<App />)
+    console.log(res);
   } catch (err) {
     console.error(err)
   }
