@@ -1,9 +1,7 @@
 {
-  "author": "Nick Fitzgerald <nfitzgerald@mozilla.com>",
-  "name": "create-rust-webpack",
-  "version": "0.2.0",
-  "repository": "https://github.com/rustwasm/rust-webpack-template",
-  "license": "(MIT OR Apache-2.0)",
+  "author": "Mario Reder <mario.reder@maibornwolff.de",
+  "name": "react-wasm-simple",
+  "version": "0.0.1",
   "scripts": {
     "start": "webpack-dev-server -d",
     "build": "webpack -p"
