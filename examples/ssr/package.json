@@ -1,0 +1,29 @@
+{
+  "author": "Nick Fitzgerald <nfitzgerald@mozilla.com>",
+  "name": "create-rust-webpack",
+  "version": "0.2.0",
+  "repository": "https://github.com/rustwasm/rust-webpack-template",
+  "license": "(MIT OR Apache-2.0)",
+  "scripts": {
+    "start": "webpack-dev-server -d",
+    "build": "webpack -p"
+  },
+  "bin": {
+    "create-rust-webpack": ".bin/create-rust-webpack.js"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.4.3",
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+    "@babel/plugin-transform-react-jsx": "^7.3.0",
+    "@babel/plugin-transform-typescript": "^7.4.0",
+    "@babel/polyfill": "^7.4.3",
+    "@babel/preset-env": "^7.4.3",
+    "@wasm-tool/wasm-pack-plugin": "0.2.7",
+    "babel-loader": "^8.0.5",
+    "html-webpack-plugin": "^3.2.0",
+    "typescript": "^3.4.3",
+    "webpack": "^4.29.6",
+    "webpack-cli": "^3.3.0",
+    "webpack-dev-server": "^3.3.1"
+  }
+}

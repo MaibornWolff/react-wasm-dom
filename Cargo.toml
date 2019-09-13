@@ -11,7 +11,7 @@ edition = "2018"
 
 [lib]
 crate-type = ["cdylib"]
-path = "src/rust/lib.rs"
+path = "src/lib.rs"
 
 [dependencies]
 html5ever = "*"
