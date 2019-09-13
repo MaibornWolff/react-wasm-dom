@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "scripts": {
     "start": "webpack-dev-server -d",
-    "build": "webpack -p"
+    "build": "webpack -p --progress --colors"
   },
   "devDependencies": {
     "@babel/core": "^7.4.3",

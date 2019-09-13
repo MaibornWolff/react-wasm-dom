@@ -1,12 +1,12 @@
 import App from "./App";
 import Component from "./Component";
 
-import("../../../pkg/react_wasm").then(module => {
+import("../../../../pkg/react_wasm").then(module => {
   try {
-    const res = module.renderToString(<App />)
+    const res = module.renderToString(<App />);
     console.log(res);
   } catch (err) {
-    console.error(err)
+    console.error(err);
   }
 });
 
