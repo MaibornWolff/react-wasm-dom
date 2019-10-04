@@ -1,7 +1,8 @@
-import App from "./App";
-import Component from "./Component";
+import * as React from "../../../../src/js";
 
-import("../../../../pkg/react_wasm").then(module => {
+import App from "./App";
+
+import("../../../../pkg").then(module => {
   try {
     const res = module.renderToString(<App />);
     console.log(res);
@@ -9,14 +10,3 @@ import("../../../../pkg/react_wasm").then(module => {
     console.error(err);
   }
 });
-
-export function h<
-  P extends Record<string, unknown>,
-  S extends Record<string, unknown>
->(type: Component<P, S>, props: P, ...children: JSX.Element[]): JSX.Element {
-  return {
-    type,
-    props: props || {},
-    children
-  };
-}

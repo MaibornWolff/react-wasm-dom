@@ -1,9 +1,8 @@
-import { h } from ".";
+import * as React from "../../../../src/js";
 
-import Component from "./Component";
 import Lorem from "./Lorem";
 
-export class Body extends Component {
+export class Body extends React.Component {
   public render() {
     return (
       <p>

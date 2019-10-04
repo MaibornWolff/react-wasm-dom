@@ -2,7 +2,7 @@ import * as express from "express";
 import * as fs from "fs";
 import * as path from "path";
 
-import { h } from "../client";
+import * as React from "../../../../src/js";
 import App from "../client/App";
 
 const app = express();
@@ -13,7 +13,7 @@ const index: string[] = fs
   })
   .split("<body></body>");
 
-import("../../../../pkg/react_wasm").then(module => {
+import("../../../../pkg").then(module => {
   app.get("/", (req: express.Request, res: express.Response) => {
     const renderedHtml = module.renderToString(<App />);
     const html = index[0] + "<body>" + renderedHtml + "</body>";

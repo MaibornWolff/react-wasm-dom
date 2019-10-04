@@ -54,18 +54,11 @@ module.exports = [
                   [
                     "@babel/plugin-transform-typescript",
                     {
-                      isTSX: true,
-                      jsxPragma: "h"
+                      isTSX: true
                     }
                   ],
                   "@babel/plugin-syntax-dynamic-import",
-                  [
-                    "@babel/plugin-transform-react-jsx",
-                    {
-                      pragma: "h",
-                      pragmaFrag: "Fragment"
-                    }
-                  ]
+                  ["@babel/plugin-transform-react-jsx"]
                 ]
               }
             }
@@ -120,18 +113,11 @@ module.exports = [
                   [
                     "@babel/plugin-transform-typescript",
                     {
-                      isTSX: true,
-                      jsxPragma: "h"
+                      isTSX: true
                     }
                   ],
                   "@babel/plugin-syntax-dynamic-import",
-                  [
-                    "@babel/plugin-transform-react-jsx",
-                    {
-                      pragma: "h",
-                      pragmaFrag: "Fragment"
-                    }
-                  ]
+                  ["@babel/plugin-transform-react-jsx"]
                 ]
               }
             }

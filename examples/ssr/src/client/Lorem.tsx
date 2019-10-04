@@ -1,4 +1,4 @@
-import { h } from ".";
+import * as React from "../../../../src/js";
 
 const Lorem = (): JSX.Element => {
   return (

@@ -8,6 +8,6 @@
     "strict": true,
     "moduleResolution": "node"
   },
-  "include": ["./src/**/*", "../../declarations/**/*"],
+  "include": ["./src/**/*", "../../declarations/**/*", "../../src/js/**/*"],
   "exclude": ["node_modules"]
 }
