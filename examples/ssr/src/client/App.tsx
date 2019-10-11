@@ -1,4 +1,4 @@
-import * as React from "../../../../src/js";
+import * as React from "../../../../pkg";
 
 import { Body } from "./Body";
 

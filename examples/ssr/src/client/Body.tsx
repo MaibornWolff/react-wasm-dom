@@ -1,7 +1,6 @@
-import * as React from "../../../../src/js";
+import * as React from "../../../../pkg";
 
 import Lorem from "./Lorem";
-
 export class Body extends React.Component {
   public render() {
     return (

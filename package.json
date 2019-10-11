@@ -1,0 +1,42 @@
+{
+  "name": "react-wasm",
+  "collaborators": [
+    "Mario Reder <mario.reder@maibornwolff.de>"
+  ],
+  "description": "React implemented in WebAssembly",
+  "version": "0.1.0",
+  "license": "(MIT OR Apache-2.0)",
+  "scripts": {
+    "start": "npm-run-all --parallel build:dev watch",
+    "build": "webpack -p --progress --colors",
+    "build:dev": "webpack -d --watch --progress --colors",
+    "watch": "nodemon ./dist --watch dist -e js,ts,jsx,tsx,json,wasm,html"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://git.maibornwolff.de/MarioR/react-wasm"
+  },
+  "dependencies": {
+    "@types/react": "^16",
+    "react": "^16.10.2"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.6.2",
+    "@babel/plugin-syntax-dynamic-import": "^7.2.0",
+    "@babel/plugin-transform-react-jsx": "^7.3.0",
+    "@babel/plugin-transform-typescript": "^7.6.0",
+    "@babel/preset-env": "^7.6.2",
+    "@types/node": "^12.7.11",
+    "@wasm-tool/wasm-pack-plugin": "^1.0.1",
+    "babel-loader": "^8.0.6",
+    "copy-webpack-plugin": "^5.0.4",
+    "ts-loader": "^6.2.0",
+    "typescript": "^3.6.3",
+    "webpack": "^4",
+    "webpack-cli": "^3.3.9"
+  },
+  "peerDependencies": {
+    "react": "^16"
+  },
+  "private": true
+}
