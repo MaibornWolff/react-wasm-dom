@@ -1,9 +1,9 @@
 {
-  "name": "react-wasm",
+  "name": "react-wasm-dom",
   "collaborators": [
     "Mario Reder <mario.reder@maibornwolff.de>"
   ],
-  "description": "React implemented in WebAssembly",
+  "description": "ReactDOM implemented in Rust, compiled to WebAssembly.",
   "version": "0.1.0",
   "license": "(MIT OR Apache-2.0)",
   "scripts": {
@@ -11,7 +11,7 @@
     "start": "npm-run-all --parallel build:dev watch",
     "build": "npm run clean && npm run build:wasm",
     "build:wasm": "npm run build:wasm:web && npm run build:wasm:node",
-    "build:wasm:web": "wasm-pack build . --release --out-dir pkg --out-name index",
+    "build:wasm:web": "wasm-pack build . --release --out-dir pkg --out-name index -- --features 'wee_alloc'",
     "build:wasm:node": "wasm-pack build . --release --out-dir pkg/server --out-name index",
     "build:dev": "webpack -d --watch --progress --colors",
     "watch": "nodemon ./dist --watch dist -e js,ts,jsx,tsx,json,wasm,html"

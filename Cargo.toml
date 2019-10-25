@@ -1,9 +1,11 @@
+cargo-features = ["profile-overrides"]
+
 [package]
 authors = ["Mario Reder <mario.reder@maibornwolff.de>"]
-categories = ["wasm", "react"]
-description = "React implemented in WebAssembly"
+categories = ["wasm", "react", "react-dom"]
+description = "ReactDOM implemented in Rust, compiled to WebAssembly."
 license = "Apache-2.0/MIT"
-name = "react-wasm"
+name = "react-wasm-dom"
 readme = "./README.md"
 repository = "https://git.maibornwolff.de/MarioR/react-wasm"
 version = "0.1.0"
@@ -51,4 +53,7 @@ wasm-opt = false
 debug = false
 lto = true
 codegen-units = 1
-opt-level = "z"
+opt-level = 3
+
+[profile.release.overrides."*"]
+opt-level = 3
