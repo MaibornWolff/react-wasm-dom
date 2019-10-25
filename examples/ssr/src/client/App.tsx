@@ -1,9 +1,8 @@
-import * as React from "../../../../pkg";
+import * as React from "react";
 
 import { Body } from "./Body";
 
 const App = (): JSX.Element => {
-  console.log("APP");
   return (
     <div>
       <h1>Awesome Rust WASM App</h1>

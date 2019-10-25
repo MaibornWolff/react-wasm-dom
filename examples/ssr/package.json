@@ -6,7 +6,12 @@
     "start": "npm-run-all --parallel build:dev watch",
     "build": "webpack -p --progress --colors",
     "build:dev": "webpack -d --watch --progress --colors",
-    "watch": "nodemon ./dist --watch dist -e js,ts,jsx,tsx,json,wasm,html"
+    "watch": "nodemon ./dist/server --watch dist/server -e js,ts,jsx,tsx,json,wasm,html"
+  },
+  "dependencies": {
+    "express": "^4.17.1",
+    "react": "^16",
+    "react-dom": "^16"
   },
   "devDependencies": {
     "@babel/core": "^7.4.3",
@@ -17,6 +22,8 @@
     "@babel/preset-env": "^7.4.3",
     "@types/express": "^4.17.1",
     "@types/node": "^12.7.5",
+    "@types/react": "^16",
+    "@types/react-dom": "^16",
     "@wasm-tool/wasm-pack-plugin": "^1",
     "babel-loader": "^8.0.5",
     "html-webpack-plugin": "^3.2.0",
@@ -27,8 +34,5 @@
     "webpack-cli": "^3.3.0",
     "webpack-dev-server": "^3.3.1",
     "webpack-node-externals": "^1.7.2"
-  },
-  "dependencies": {
-    "express": "^4.17.1"
   }
 }

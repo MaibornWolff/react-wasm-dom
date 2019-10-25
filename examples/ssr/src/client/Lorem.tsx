@@ -1,4 +1,5 @@
-import * as React from "../../../../pkg";
+// import * as React from "../../../../pkg";
+import * as React from "react";
 
 const Lorem = (): JSX.Element => {
   return (

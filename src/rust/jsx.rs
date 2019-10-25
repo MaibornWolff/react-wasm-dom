@@ -9,11 +9,13 @@ extern "C" {
     #[wasm_bindgen(method, getter)]
     pub fn props(this: &Jsx) -> js_sys::Object;
 
-    #[wasm_bindgen(method, getter)]
-    pub fn children(this: &Jsx) -> js_sys::Array;
-
     #[wasm_bindgen(method, getter, js_name=type)]
     pub fn jsx_type(this: &Jsx) -> JsValue;
+
+    pub type JsxProps;
+
+    #[wasm_bindgen(method, getter)]
+    pub fn children(this: &JsxProps) -> Option<js_sys::Object>;
 }
 
 pub enum JsxType {

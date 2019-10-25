@@ -1,4 +1,4 @@
-import * as React from "../../../../pkg";
+import * as React from "react";
 
 import Lorem from "./Lorem";
 export class Body extends React.Component {

@@ -1,12 +1,6 @@
-import * as React from "../../../../pkg";
+import * as React from "react";
+import * as ReactDOM from "react-dom";
 
 import App from "./App";
 
-import("../../../../pkg").then(module => {
-  try {
-    const res = module.renderToString(<App />);
-    console.log(res);
-  } catch (err) {
-    console.error(err);
-  }
-});
+ReactDOM.render(<App />, document.body);
