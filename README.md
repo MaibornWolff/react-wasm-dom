@@ -1,34 +1,45 @@
-# 🦀🕸 `rust-webpack-template`
+# ReactWasmDOM
 
-> **Kickstart your Rust, WebAssembly, and Webpack project!**
+An experimental drop-in replacement for ReactDOM, written in Rust, compiled to WebAssembly.
 
-This template is designed for creating monorepo-style Web applications with
-Rust-generated WebAssembly and Webpack without publishing your wasm to NPM.
+## Status
 
-[**📚 Read this template tutorial! 📚**][template-docs]
+There are currently only plans to support `renderToString`, which is already half-functional.
+HTML markup should be generated (correctly), but no attributes will be rendered.
 
-Be sure to check out [other `wasm-pack` tutorials online][tutorials] for other
-templates and usages of `wasm-pack`.
+You can see a working [SSR example right here](./examples/ssr).
 
-[tutorials]: https://rustwasm.github.io/docs/wasm-pack/tutorials/index.html
-[template-docs]: https://rustwasm.github.io/docs/wasm-pack/tutorials/hybrid-applications-with-webpack/index.html
+## Installation
 
-## 🚴 Using This Template
+`npm install react-wasm-dom`
 
-You can use `npm init` to clone this template:
+## Usage
 
-```sh
-npm init rust-webpack my-app
+Just replace `renderToString` from ReactDOM with the equivalent provided function.
+
+```tsx
+import { renderToString } from "react-dom/server";
+
+// ....
+
+const markup = renderToString(<App />);
 ```
 
-[Afterwards check out the full documentation for exploring it][template-docs].
+becomes
 
-## 🔋 Batteries Included
+```tsx
+import("react-wasm-dom/server").then(({ renderToString }) => {
+  // ....
 
-This template comes pre-configured with all the boilerplate for compiling Rust
-to WebAssembly and hooking into a Webpack build pipeline.
+  const markup = renderToString(<App />);
+});
+```
 
-* `npm run start` -- Serve the project locally for development at
-  `http://localhost:8080`.
+## Caveats
 
-* `npm run build` -- Bundle the project (in production mode).
+- Only modern module bundlers are supported. Otherwise the library won't load successfully under Node
+
+## Roadmap
+
+- Unit Tests
+- HTML attribute rendering
