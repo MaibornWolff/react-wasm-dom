@@ -12,7 +12,7 @@
     "build": "npm run clean && npm run build:wasm",
     "build:wasm": "npm run build:wasm:web && npm run build:wasm:node",
     "build:wasm:web": "wasm-pack build . --release --out-dir pkg --out-name index -- --features 'wee_alloc'",
-    "build:wasm:node": "wasm-pack build . --release --out-dir pkg/server --out-name index",
+    "build:wasm:node": "wasm-pack build . --release --out-dir pkg --out-name server --is-child --target nodejs",
     "build:dev": "webpack -d --watch --progress --colors",
     "watch": "nodemon ./dist --watch dist -e js,ts,jsx,tsx,json,wasm,html"
   },
