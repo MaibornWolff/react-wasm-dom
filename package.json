@@ -13,8 +13,11 @@
     "build:wasm": "npm run build:wasm:web && npm run build:wasm:node",
     "build:wasm:web": "wasm-pack build . --release --out-dir pkg --out-name index -- --features 'wee_alloc'",
     "build:wasm:node": "wasm-pack build . --release --out-dir pkg --out-name server --is-child --target nodejs",
-    "build:dev": "webpack -d --watch --progress --colors",
-    "watch": "nodemon ./dist --watch dist -e js,ts,jsx,tsx,json,wasm,html"
+    "build:wasm:watch": "cargo watch -w ./src/rust -s 'wasm-pack build . --out-dir pkg --out-name server --is-child --target nodejs'",
+    "watch": "nodemon ./dist --watch dist -e js,ts,jsx,tsx,json,wasm,html",
+    "test": "jest",
+    "test:watch": "npm-run-all --parallel test:watch:js build:wasm:watch",
+    "test:watch:js": "jest --watch"
   },
   "repository": {
     "type": "git",
@@ -24,8 +27,18 @@
     "react": "^16"
   },
   "devDependencies": {
+    "@babel/plugin-syntax-dynamic-import": "^7.7.4",
+    "@babel/plugin-transform-react-jsx": "^7.7.4",
+    "@babel/plugin-transform-typescript": "^7.7.4",
+    "@babel/preset-env": "^7.7.4",
+    "@types/jest": "^24.0.23",
     "@types/node": "^12.7.11",
     "@types/react": "^16",
+    "babel-jest": "^24.9.0",
+    "enzyme": "^3.10.0",
+    "enzyme-adapter-react-16": "^1.15.1",
+    "jest": "^24.9.0",
+    "npm-run-all": "^4.1.5",
     "rimraf": "^3.0.0",
     "typescript": "^3.6.3"
   },

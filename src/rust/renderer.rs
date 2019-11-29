@@ -7,7 +7,7 @@ use html5ever::{
     rcdom::{Node, NodeData, RcDom},
     serialize,
     tendril::Tendril,
-    tree_builder::{self, TreeSink},
+    tree_builder::{self, Attribute, TreeSink},
     LocalName, QualName,
 };
 use js_sys::{Array, JsString, Reflect};
@@ -92,11 +92,21 @@ fn render_intrinsic(js_val: js_sys::Object, element: &Element, document: &Docume
     };
 }
 
+#[wasm_bindgen(js_name = renderToStaticMarkup)]
+#[allow(dead_code)]
+pub fn render_to_static_markup(jsx: &Jsx) -> Result<String, JsValue> {
+    render_server_side(jsx, true)
+}
+
 #[wasm_bindgen(js_name = renderToString)]
 #[allow(dead_code)]
 pub fn render_to_string(jsx: &Jsx) -> Result<String, JsValue> {
+    render_server_side(jsx, false)
+}
+
+pub fn render_server_side(jsx: &Jsx, is_static: bool) -> Result<String, JsValue> {
     let mut dom = RcDom::default();
-    render_jsx_to_string(jsx, &mut dom, None)?;
+    render_jsx_to_string(jsx, &mut dom, None, true, is_static)?;
 
     let mut cursor = Cursor::new(vec![]);
     serialize(&mut cursor, &dom.document, Default::default()).unwrap();
@@ -104,7 +114,7 @@ pub fn render_to_string(jsx: &Jsx) -> Result<String, JsValue> {
     Ok(from_utf8(&cursor.into_inner()).unwrap().to_string())
 }
 
-fn render_jsx_to_string(jsx: &Jsx, dom: &mut RcDom, node: Option<Rc<Node>>) -> Result<(), JsValue> {
+fn render_jsx_to_string(jsx: &Jsx, dom: &mut RcDom, node: Option<Rc<Node>>, is_root: bool, is_static: bool) -> Result<(), JsValue> {
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"JSX".into(), &jsx);
 
@@ -113,23 +123,35 @@ fn render_jsx_to_string(jsx: &Jsx, dom: &mut RcDom, node: Option<Rc<Node>>) -> R
             let component: Component = Reflect::construct(&constructor, &Array::new())
                 .expect("Component constructor failed")
                 .unchecked_into();
-            render_jsx_to_string(&component.render(), dom, node)
+            render_jsx_to_string(&component.render(), dom, node, false, is_static)
         }
         JsxType::Functional(function) => {
             let jsx: Jsx = function
                 .call0(&JsValue::NULL)
                 .expect("Functional Component initialization failed")
                 .unchecked_into();
-            render_jsx_to_string(&jsx, dom, node)
+            render_jsx_to_string(&jsx, dom, node, false, is_static)
         }
         JsxType::Intrinsic(intrinsic) => {
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
 
+            let mut attributes = vec![];
+            if is_root {
+                attributes.push(Attribute {
+                    name: QualName::new(
+                        None,
+                        ns!(),
+                        LocalName::from("data-reactroot")
+                    ),
+                    value: Tendril::from("".to_string())
+                });
+            }
+
             let element = tree_builder::create_element(
                 dom,
                 QualName::new(None, ns!(), LocalName::from(intrinsic)),
-                vec![],
+                attributes,
             );
 
             let props = jsx.props();
@@ -141,10 +163,10 @@ fn render_jsx_to_string(jsx: &Jsx, dom: &mut RcDom, node: Option<Rc<Node>>) -> R
             if let Some(children) = props.children() {
                 if let Some(children) = children.dyn_ref::<js_sys::Array>() {
                     children.for_each(&mut |val: JsValue, _index, _array| {
-                        render_intrinsic_to_string(val.into(), element.clone(), dom);
+                        render_intrinsic_to_string(val.into(), element.clone(), dom, is_static);
                     });
                 } else {
-                    render_intrinsic_to_string(children, element.clone(), dom);
+                    render_intrinsic_to_string(children, element.clone(), dom, is_static);
                 }
             }
             match node {
@@ -156,7 +178,7 @@ fn render_jsx_to_string(jsx: &Jsx, dom: &mut RcDom, node: Option<Rc<Node>>) -> R
     }
 }
 
-fn render_intrinsic_to_string(js_val: js_sys::Object, element: Rc<Node>, dom: &mut RcDom) {
+fn render_intrinsic_to_string(js_val: js_sys::Object, element: Rc<Node>, dom: &mut RcDom, is_static: bool) {
     match js_val.dyn_ref::<JsString>() {
         Some(js_string) => {
             let s: String = js_string.into();
@@ -169,7 +191,7 @@ fn render_intrinsic_to_string(js_val: js_sys::Object, element: Rc<Node>, dom: &m
         }
         None => {
             let jsx = js_val.unchecked_ref::<Jsx>();
-            render_jsx_to_string(jsx, dom, Some(element.clone())).unwrap();
+            render_jsx_to_string(jsx, dom, Some(element.clone()), false, is_static).unwrap();
         }
     };
 }
