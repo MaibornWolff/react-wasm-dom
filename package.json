@@ -17,7 +17,7 @@
     "watch": "nodemon ./dist --watch dist -e js,ts,jsx,tsx,json,wasm,html",
     "test": "jest",
     "test:watch": "npm-run-all --parallel test:watch:js build:wasm:watch",
-    "test:watch:js": "jest --watch"
+    "test:watch:js": "jest --watchAll"
   },
   "repository": {
     "type": "git",

@@ -38,7 +38,7 @@ describe('ReactDOMServer', () => {
       expect(response).toMatch(new RegExp('<img data-reactroot=""' + '/>'));
     });
 
-    fit('should generate comment markup for component returns null', () => {
+    it('should generate comment markup for component returns null', () => {
       class NullComponent extends React.Component {
         render() {
           return null;

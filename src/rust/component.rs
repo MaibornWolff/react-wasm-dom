@@ -1,5 +1,3 @@
-use super::jsx::Jsx;
-
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -10,5 +8,5 @@ extern "C" {
     pub fn props(this: &Component) -> js_sys::Object;
 
     #[wasm_bindgen(method)]
-    pub fn render(this: &Component) -> Jsx;
+    pub fn render(this: &Component) -> JsValue;
 }

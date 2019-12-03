@@ -20,16 +20,17 @@ use web_sys::{Document, Element};
 pub fn render(jsx: &Jsx) -> Result<(), JsValue> {
     let window = web_sys::window().expect("no global `window` exists");
     let document = window.document().expect("should have a document on window");
-    let element = render_jsx(jsx, &document)?;
+    if let Some(element) = render_jsx(jsx, &document)? {
+        let body = document.body().expect("document should have a body");
+        body.append_child(&element)?;
+    
+        web_sys::console::log_1(&element);
+    }
 
-    let body = document.body().expect("document should have a body");
-    body.append_child(&element)?;
-
-    web_sys::console::log_1(&element);
     Ok(())
 }
 
-fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Element, JsValue> {
+fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Option<Element>, JsValue> {
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"RENDER".into(), jsx);
 
@@ -38,14 +39,21 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Element, JsValue> {
             let component: Component = Reflect::construct(&constructor, &Array::new())
                 .expect("Component constructor failed")
                 .unchecked_into();
+            #[cfg(debug_assertions)]
             web_sys::console::log_2(&"CLASS COMPONENT".into(), &component);
-            render_jsx(&component.render(), document)
+            let jsx = component.render();
+            if jsx.is_null() {
+                Ok(None)
+            } else {
+                render_jsx(&jsx.unchecked_into::<Jsx>(), document)
+            }
         }
         JsxType::Functional(function) => {
             let jsx: Jsx = function
                 .call0(&JsValue::NULL)
                 .expect("Functional Component initialization failed")
                 .unchecked_into();
+            #[cfg(debug_assertions)]
             web_sys::console::log_2(&"FUNCTIONAL COMPONENT".into(), &jsx);
             render_jsx(&jsx, document)
         }
@@ -70,7 +78,7 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Element, JsValue> {
                     render_intrinsic(children, &element, document);
                 }
             }
-            Ok(element)
+            Ok(Some(element))
         }
     }
 }
@@ -84,10 +92,11 @@ fn render_intrinsic(js_val: js_sys::Object, element: &Element, document: &Docume
         }
         None => {
             let jsx = js_val.unchecked_ref::<Jsx>();
-            let child_element = render_jsx(jsx, document).unwrap();
-            element
-                .insert_adjacent_element("beforeend".into(), &child_element)
-                .expect("insert_adjacent_element");
+            if let Ok(Some(child_element)) = render_jsx(jsx, document) {
+                element
+                    .insert_adjacent_element("beforeend".into(), &child_element)
+                    .expect("insert_adjacent_element");
+            }
         }
     };
 }
@@ -120,10 +129,15 @@ fn render_jsx_to_string(jsx: &Jsx, dom: &mut RcDom, node: Option<Rc<Node>>, is_r
 
     match jsx.jsx_type().try_into()? {
         JsxType::Component(constructor) => {
-            let component: Component = Reflect::construct(&constructor, &Array::new())
+            let component: Component = Reflect::construct(&constructor, &Array::of1(&jsx.props()))
                 .expect("Component constructor failed")
                 .unchecked_into();
-            render_jsx_to_string(&component.render(), dom, node, false, is_static)
+            let jsx = component.render();
+            if jsx.is_null() {
+                Ok(())
+            } else {
+                render_jsx_to_string(&jsx.unchecked_into::<Jsx>(), dom, node, false, is_static)
+            }
         }
         JsxType::Functional(function) => {
             let jsx: Jsx = function
