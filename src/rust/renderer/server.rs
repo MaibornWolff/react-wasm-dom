@@ -1,9 +1,6 @@
-use wasm_bindgen::prelude::*;
-
 use crate::{
-    component::Component,
-    jsx::{Jsx, JsxProps, JsxType},
-    react::React,
+    jsx::{Jsx, JsxProps},
+    react::{React, ReactComponent},
 };
 
 use html5ever::{
@@ -13,9 +10,9 @@ use html5ever::{
     tree_builder::{self, Attribute, TreeSink},
     LocalName, QualName,
 };
-use js_sys::{Array, JsString, Reflect};
-use std::{cell::RefCell, convert::TryInto, io::Cursor, rc::Rc, str::from_utf8};
-use wasm_bindgen::JsCast;
+use js_sys::JsString;
+use std::{cell::RefCell, io::Cursor, rc::Rc, str::from_utf8};
+use wasm_bindgen::{prelude::*, JsCast};
 
 #[wasm_bindgen(js_name = renderToStaticMarkup)]
 #[allow(dead_code)]
@@ -71,11 +68,8 @@ fn render_jsx_to_string(
     #[cfg(debug_assertions)]
     web_sys::console::log_3(&"JSX".into(), &jsx, &is_root.into());
 
-    match jsx.jsx_type().try_into()? {
-        JsxType::Component(constructor) => {
-            let component: Component = Reflect::construct(&constructor, &Array::of1(&jsx.props()))
-                .expect("Component constructor failed")
-                .unchecked_into();
+    match jsx.get_component()? {
+        ReactComponent::Component(component) => {
             let jsx = component.render();
             if jsx.is_null() {
                 Ok(())
@@ -83,14 +77,14 @@ fn render_jsx_to_string(
                 render_jsx_to_string(&jsx.unchecked_into::<Jsx>(), dom, node, is_root, is_static)
             }
         }
-        JsxType::Functional(function) => {
+        ReactComponent::Functional(function) => {
             let jsx: Jsx = function
                 .call0(&JsValue::NULL)
                 .expect("Functional Component initialization failed")
                 .unchecked_into();
             render_jsx_to_string(&jsx, dom, node, is_root, is_static)
         }
-        JsxType::Intrinsic(intrinsic) => {
+        ReactComponent::Intrinsic(intrinsic) => {
             render_intrinsic(intrinsic, jsx, dom, node, is_root, is_static)
         }
     }

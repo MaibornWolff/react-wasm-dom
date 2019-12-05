@@ -1,13 +1,10 @@
-use wasm_bindgen::prelude::*;
-
 use crate::{
-    component::Component,
-    jsx::{Jsx, JsxProps, JsxType},
+    jsx::{Jsx, JsxProps},
+    react::ReactComponent,
 };
 
-use js_sys::{Array, JsString, Reflect};
-use std::convert::TryInto;
-use wasm_bindgen::JsCast;
+use js_sys::JsString;
+use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{Document, Element};
 
 pub mod server;
@@ -30,11 +27,8 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Option<Element>, JsValue
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"RENDER".into(), jsx);
 
-    match jsx.jsx_type().try_into()? {
-        JsxType::Component(constructor) => {
-            let component: Component = Reflect::construct(&constructor, &Array::new())
-                .expect("Component constructor failed")
-                .unchecked_into();
+    match jsx.get_component()? {
+        ReactComponent::Component(component) => {
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"CLASS COMPONENT".into(), &component);
             let jsx = component.render();
@@ -44,7 +38,7 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Option<Element>, JsValue
                 render_jsx(&jsx.unchecked_into::<Jsx>(), document)
             }
         }
-        JsxType::Functional(function) => {
+        ReactComponent::Functional(function) => {
             let jsx: Jsx = function
                 .call0(&JsValue::NULL)
                 .expect("Functional Component initialization failed")
@@ -53,7 +47,7 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Option<Element>, JsValue
             web_sys::console::log_2(&"FUNCTIONAL COMPONENT".into(), &jsx);
             render_jsx(&jsx, document)
         }
-        JsxType::Intrinsic(intrinsic) => {
+        ReactComponent::Intrinsic(intrinsic) => {
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
 

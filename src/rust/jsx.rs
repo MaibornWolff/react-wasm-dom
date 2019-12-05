@@ -1,5 +1,6 @@
+use crate::react::ReactComponent;
+
 use js_sys::{Array, Function, Reflect};
-use std::convert::TryInto;
 use wasm_bindgen::{prelude::*, JsCast};
 
 #[wasm_bindgen]
@@ -21,36 +22,25 @@ extern "C" {
     pub fn children(this: &JsxProps) -> Option<js_sys::Object>;
 }
 
-pub enum JsxType {
-    Component(js_sys::Function),
-    Functional(js_sys::Function),
-    Intrinsic(String),
-}
-
 impl Jsx {
-    fn is_constructor(function: &js_sys::Function) -> bool {
-        match Reflect::construct(function, &Array::new()) {
-            Ok(_) => true,
-            Err(_) => false,
-        }
-    }
-}
-
-impl TryInto<JsxType> for JsValue {
-    type Error = JsValue;
-
-    fn try_into(self) -> Result<JsxType, Self::Error> {
-        if self.is_function() {
-            let function: Function = self.unchecked_into();
-            if Jsx::is_constructor(&function) {
-                Ok(JsxType::Component(function))
-            } else {
-                Ok(JsxType::Functional(function))
+    pub fn get_component(&self) -> Result<ReactComponent, JsValue> {
+        if self.jsx_type().is_function() {
+            let function: Function = self.jsx_type().unchecked_into();
+            match self.construct(&function) {
+                Ok(component) => Ok(component),
+                Err(_) => Ok(ReactComponent::Functional(function)),
             }
-        } else if let Some(intrinsic) = self.as_string() {
-            Ok(JsxType::Intrinsic(intrinsic))
+        } else if let Some(intrinsic) = self.jsx_type().as_string() {
+            Ok(ReactComponent::Intrinsic(intrinsic))
         } else {
             Err("bad jsx value".into())
+        }
+    }
+
+    fn construct(&self, function: &js_sys::Function) -> Result<ReactComponent, ()> {
+        match Reflect::construct(function, &Array::of1(&self.props())) {
+            Ok(component) => Ok(ReactComponent::Component(component.unchecked_into())),
+            Err(_) => Err(()),
         }
     }
 }
