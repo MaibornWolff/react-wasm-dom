@@ -15,4 +15,5 @@ fn set_panic_hook() {
 
 mod component;
 mod jsx;
+mod react;
 mod renderer;

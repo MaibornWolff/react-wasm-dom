@@ -15,7 +15,7 @@ const index: string[] = fs
 
 import("../../../../pkg/server").then(module => {
   app.get("/", (_req: express.Request, res: express.Response) => {
-    const renderedHtml = module.renderToString(<App />);
+    const renderedHtml = module.renderToString(React, <App />);
     const html = index[0] + renderedHtml;
     res.send(html);
   });

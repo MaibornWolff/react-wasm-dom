@@ -6,10 +6,13 @@ use wasm_bindgen::{prelude::*, JsCast};
 extern "C" {
     pub type Jsx;
 
+    #[wasm_bindgen(method, getter, js_name = "$$typeof")]
+    pub fn type_of(this: &Jsx) -> JsValue;
+
     #[wasm_bindgen(method, getter)]
     pub fn props(this: &Jsx) -> js_sys::Object;
 
-    #[wasm_bindgen(method, getter, js_name=type)]
+    #[wasm_bindgen(method, getter, js_name = type)]
     pub fn jsx_type(this: &Jsx) -> JsValue;
 
     pub type JsxProps;
