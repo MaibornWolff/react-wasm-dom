@@ -9,4 +9,10 @@ extern "C" {
 
     #[wasm_bindgen(method)]
     pub fn render(this: &Component) -> JsValue;
+
+    #[wasm_bindgen(method, js_name = componentWillMount)]
+    pub fn component_will_mount(this: &Component);
+
+    #[wasm_bindgen(method, js_name = UNSAFE_componentWillMount)]
+    pub fn unsafe_component_will_mount(this: &Component);
 }

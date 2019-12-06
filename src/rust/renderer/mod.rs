@@ -28,7 +28,7 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Option<Element>, JsValue
     web_sys::console::log_2(&"RENDER".into(), jsx);
 
     match jsx.get_component()? {
-        ReactComponent::Component(component) => {
+        ReactComponent::Class(component) => {
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"CLASS COMPONENT".into(), &component);
             let jsx = component.render();

@@ -11,7 +11,7 @@ extern "C" {
 }
 
 pub enum ReactComponent {
-    Component(Component),
+    Class(Component),
     Functional(js_sys::Function),
     Intrinsic(String),
 }

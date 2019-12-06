@@ -69,12 +69,19 @@ fn render_jsx_to_string(
     web_sys::console::log_3(&"JSX".into(), &jsx, &is_root.into());
 
     match jsx.get_component()? {
-        ReactComponent::Component(component) => {
+        ReactComponent::Class(component) => {
+            let obj = component.unchecked_ref::<js_sys::Object>();
+            let proto = js_sys::Object::get_prototype_of(obj);
+            if proto.has_own_property(&"componentWillMount".into()) {
+                component.component_will_mount();
+            } else if proto.has_own_property(&"UNSAFE_componentWillMount".into()) {
+                component.unsafe_component_will_mount();
+            }
             let jsx = component.render();
             if jsx.is_null() {
                 Ok(())
             } else {
-                render_jsx_to_string(&jsx.unchecked_into::<Jsx>(), dom, node, is_root, is_static)
+                render_jsx_to_string(jsx.unchecked_ref::<Jsx>(), dom, node, is_root, is_static)
             }
         }
         ReactComponent::Functional(function) => {

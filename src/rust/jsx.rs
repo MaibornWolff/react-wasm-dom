@@ -39,7 +39,7 @@ impl Jsx {
 
     fn construct(&self, function: &js_sys::Function) -> Result<ReactComponent, ()> {
         match Reflect::construct(function, &Array::of1(&self.props())) {
-            Ok(component) => Ok(ReactComponent::Component(component.unchecked_into())),
+            Ok(component) => Ok(ReactComponent::Class(component.unchecked_into())),
             Err(_) => Err(()),
         }
     }
