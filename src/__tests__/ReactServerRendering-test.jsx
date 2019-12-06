@@ -179,7 +179,7 @@ describe('ReactDOMServer', () => {
       );
     });
 
-    it('should not crash on poisoned hasOwnProperty', () => {
+    fit('should not crash on poisoned hasOwnProperty', () => {
       let html;
       expect(
         () =>

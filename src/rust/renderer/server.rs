@@ -108,17 +108,15 @@ fn render_intrinsic(
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
 
-    if jsx.props().has_own_property(&"style".into()) {
-        check_style_prop(jsx)?;
+    if Reflect::get(&jsx.props(), &"hasOwnProperty".into())?.is_function() {
+        if jsx.props().has_own_property(&"style".into()) {
+            check_style_prop(jsx)?;
+        }
+    } else {
+        handle_poisoned_has_own_property(jsx);
     }
 
-    let mut attributes = vec![];
-    if is_root && !is_static {
-        attributes.push(Attribute {
-            name: QualName::new(None, ns!(), LocalName::from("data-reactroot")),
-            value: Tendril::from("".to_string()),
-        });
-    }
+    let attributes = get_intrinsic_attributes(jsx, is_root, is_static)?;
 
     let element = tree_builder::create_element(
         dom,
@@ -153,10 +151,52 @@ fn check_style_prop(jsx: &Jsx) -> Result<(), JsValue> {
     if style.is_object() {
         Ok(())
     } else {
-        let err = "The `style` prop expects a mapping from style properties to values, not \
-                   a string. For example, style={{marginRight: spacing + 'em'}} when using JSX.\n    in iframe (at **)";
-        Err(js_sys::Error::new(err).into())
+        let mut err =
+            "The `style` prop expects a mapping from style properties to values, not \
+             a string. For example, style={{marginRight: spacing + 'em'}} when using JSX."
+                .to_string();
+        jsx.add_component_stack(&mut err);
+        Err(js_sys::Error::new(&err).into())
     }
+}
+
+fn handle_poisoned_has_own_property(jsx: &Jsx) {
+    let mut err = "React does not recognize the `hasOwnProperty` prop".to_string();
+    jsx.add_component_stack(&mut err);
+    web_sys::console::error_1(&err.into());
+}
+
+fn get_intrinsic_attributes(
+    jsx: &Jsx,
+    is_root: bool,
+    is_static: bool,
+) -> Result<Vec<Attribute>, JsValue> {
+    let mut attributes = vec![];
+    if is_root && !is_static {
+        attributes.push(Attribute {
+            name: QualName::new(None, ns!(), LocalName::from("data-reactroot")),
+            value: Tendril::from("".to_string()),
+        });
+    }
+    for prop in js_sys::Object::entries(&jsx.props()).values() {
+        let prop: js_sys::Array = prop?.into();
+        let value = prop.pop();
+        let key = prop.pop();
+        let attr_name: String = key.unchecked_into::<JsString>().into();
+        match attr_name.as_ref() {
+            "hasOwnProperty" | "children" => {}
+            _ => {
+                if let Ok(value) = value.dyn_into::<JsString>() {
+                    let attr_value: String = value.into();
+                    attributes.push(Attribute {
+                        name: QualName::new(None, ns!(), LocalName::from(attr_name)),
+                        value: Tendril::from(attr_value),
+                    });
+                }
+            }
+        }
+    }
+    Ok(attributes)
 }
 
 fn render_intrinsic_to_string(

@@ -4,5 +4,9 @@ module.exports = {
   testRegex: TEST_REGEX,
   testPathIgnorePatterns: ['<rootDir>/.next/', '<rootDir>/node_modules/'],
   moduleFileExtensions: ['ts', 'tsx', 'js', 'jsx'],
+  setupFilesAfterEnv: ['<rootDir>/jest/setupTests.js'],
   collectCoverage: false,
+  globals: {
+    __DEV__: true
+  }
 };

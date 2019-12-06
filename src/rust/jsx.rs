@@ -43,4 +43,14 @@ impl Jsx {
             Err(_) => Err(()),
         }
     }
+
+    pub fn add_component_stack(&self, err: &mut String) {
+        err.push_str("\n    in ");
+        let jsx_type: String = match self.jsx_type().as_string() {
+            Some(t) => t,
+            None => self.jsx_type().unchecked_into::<Function>().name().into(),
+        };
+        err.push_str(&jsx_type);
+        err.push_str(" (at **)");
+    }
 }
