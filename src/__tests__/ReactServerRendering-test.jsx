@@ -78,9 +78,7 @@ describe('ReactDOMServer', () => {
             '>' +
             '<span' +
             '>' +
-            'My name is child' +
-            // TODO where does <!-- --> come from?
-            // 'My name is <!-- -->child' +
+            'My name is <!-- -->child' +
             '</span>' +
             '</div>',
         ),
@@ -140,9 +138,7 @@ describe('ReactDOMServer', () => {
               'data-reactroot' +
               '=""' +
               '>' +
-              'Component name: TestComponent' +
-              // TODO
-              // 'Component name: <!-- -->TestComponent' +
+              'Component name: <!-- -->TestComponent' +
               '</span>',
           ),
         );

@@ -130,9 +130,17 @@ fn render_intrinsic(
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"PROPS".into(), &props);
 
+    let mut is_first = true;
+
     if let Some(children) = props.children() {
         if let Some(children) = children.dyn_ref::<js_sys::Array>() {
             for child in children.values() {
+                if !is_static && !is_first {
+                    let comment = dom.create_comment(Tendril::from(" "));
+                    element.children.borrow_mut().push(comment);
+                } else {
+                    is_first = false;
+                }
                 render_intrinsic_to_string(child?.into(), element.clone(), dom, is_static);
             }
         } else {
@@ -208,16 +216,20 @@ fn render_intrinsic_to_string(
     match js_val.dyn_ref::<JsString>() {
         Some(js_string) => {
             let s: String = js_string.into();
-            element
-                .children
-                .borrow_mut()
-                .push(Node::new(NodeData::Text {
-                    contents: RefCell::new(Tendril::from(s)),
-                }));
+            render_text_component(element, s);
         }
         None => {
             let jsx = js_val.unchecked_ref::<Jsx>();
             render_jsx_to_string(jsx, dom, Some(element.clone()), false, is_static).unwrap();
         }
     };
+}
+
+fn render_text_component(element: Rc<Node>, s: String) {
+    element
+        .children
+        .borrow_mut()
+        .push(Node::new(NodeData::Text {
+            contents: RefCell::new(Tendril::from(s)),
+        }));
 }
