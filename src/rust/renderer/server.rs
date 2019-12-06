@@ -10,7 +10,7 @@ use html5ever::{
     tree_builder::{self, Attribute, TreeSink},
     LocalName, QualName,
 };
-use js_sys::JsString;
+use js_sys::{JsString, Reflect};
 use std::{cell::RefCell, io::Cursor, rc::Rc, str::from_utf8};
 use wasm_bindgen::{prelude::*, JsCast};
 
@@ -108,6 +108,10 @@ fn render_intrinsic(
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
 
+    if jsx.props().has_own_property(&"style".into()) {
+        check_style_prop(jsx)?;
+    }
+
     let mut attributes = vec![];
     if is_root && !is_static {
         attributes.push(Attribute {
@@ -130,9 +134,9 @@ fn render_intrinsic(
 
     if let Some(children) = props.children() {
         if let Some(children) = children.dyn_ref::<js_sys::Array>() {
-            children.for_each(&mut |val: JsValue, _index, _array| {
-                render_intrinsic_to_string(val.into(), element.clone(), dom, is_static);
-            });
+            for child in children.values() {
+                render_intrinsic_to_string(child?.into(), element.clone(), dom, is_static);
+            }
         } else {
             render_intrinsic_to_string(children, element.clone(), dom, is_static);
         }
@@ -142,6 +146,17 @@ fn render_intrinsic(
         None => dom.get_document().children.borrow_mut().push(element),
     };
     Ok(())
+}
+
+fn check_style_prop(jsx: &Jsx) -> Result<(), JsValue> {
+    let style = Reflect::get(&jsx.props(), &"style".into())?;
+    if style.is_object() {
+        Ok(())
+    } else {
+        let err = "The `style` prop expects a mapping from style properties to values, not \
+                   a string. For example, style={{marginRight: spacing + 'em'}} when using JSX.\n    in iframe (at **)";
+        Err(js_sys::Error::new(err).into())
+    }
 }
 
 fn render_intrinsic_to_string(

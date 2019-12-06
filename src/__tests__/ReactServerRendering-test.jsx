@@ -164,10 +164,10 @@ describe('ReactDOMServer', () => {
       );
     });
 
-    it('should throw prop mapping error for an <iframe /> with invalid props', () => {
+    fit('should throw prop mapping error for an <iframe /> with invalid props', () => {
       let caughtErr;
       try {
-        ReactDOMServer.renderToString(<iframe style="border:none;" />);
+        ReactDOMServer.renderToString(React, <iframe style="border:none;" />);
       } catch (err) {
         caughtErr = err;
       }
@@ -184,6 +184,7 @@ describe('ReactDOMServer', () => {
       expect(
         () =>
           (html = ReactDOMServer.renderToString(
+            React,
             <div hasOwnProperty="poison">
               <span unknown="test" />
             </div>,
@@ -244,7 +245,7 @@ describe('ReactDOMServer', () => {
       expect(response).toBe('');
     });
 
-    it('should only execute certain lifecycle methods', () => {
+    fit('should only execute certain lifecycle methods', () => {
       function runTest() {
         const lifecycle = [];
 
@@ -289,7 +290,7 @@ describe('ReactDOMServer', () => {
           }
         }
 
-        const response = ReactDOMServer.renderToStaticMarkup(<TestComponent />);
+        const response = ReactDOMServer.renderToStaticMarkup(React, <TestComponent />);
 
         expect(response).toBe('<span>Component name: TestComponent</span>');
         expect(lifecycle).toEqual([
@@ -302,9 +303,9 @@ describe('ReactDOMServer', () => {
       runTest();
     });
 
-    it('should throw with silly args', () => {
+    fit('should throw with silly args', () => {
       expect(
-        ReactDOMServer.renderToStaticMarkup.bind(ReactDOMServer, {x: 123}),
+        ReactDOMServer.renderToStaticMarkup.bind(ReactDOMServer, React, {x: 123}),
       ).toThrowError(
         'Objects are not valid as a React child (found: object with keys {x})',
       );
