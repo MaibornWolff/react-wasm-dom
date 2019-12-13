@@ -16,8 +16,8 @@ crate-type = ["cdylib"]
 path = "src/rust/lib.rs"
 
 [dependencies]
-html5ever = "0.24"
 js-sys = "0.3"
+typed-html = "0.2"
 wasm-bindgen = "0.2"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by

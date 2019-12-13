@@ -18,6 +18,7 @@ You can see a working [SSR example right here](./examples/ssr).
 Just replace `renderToString` from ReactDOM with the equivalent provided function.
 
 ```tsx
+import * as React from 'react;
 import { renderToString } from "react-dom/server";
 
 // ....
@@ -28,18 +29,21 @@ const markup = renderToString(<App />);
 becomes
 
 ```tsx
+import * as React from 'react;
 import("react-wasm-dom/server").then(({ renderToString }) => {
   // ....
 
-  const markup = renderToString(<App />);
+  const markup = renderToString(React, <App />);
 });
 ```
 
 ## Caveats
 
 - Only modern module bundlers are supported. Otherwise the library won't load successfully under Node
+- React must be passed to `renderToString` so that WebAssembly has access to its functions
 
 ## Roadmap
 
 - Unit Tests
 - HTML attribute rendering
+- only supports [strict mode](https://reactjs.org/docs/strict-mode.html)

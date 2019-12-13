@@ -34,12 +34,12 @@ describe('ReactDOMServer', () => {
     });
 
     // TODO: no idea how to self close a tag
-    xit('should generate simple markup for self-closing tags', () => {
+    it('should generate simple markup for self-closing tags', () => {
       const response = ReactDOMServer.renderToString(React, <img />);
       expect(response).toMatch(new RegExp('<img data-reactroot=""' + '/>'));
     });
 
-    fit('should generate comment markup for component returns null', () => {
+    it('should generate comment markup for component returns null', () => {
       class NullComponent extends React.Component {
         render() {
           return null;
@@ -52,7 +52,7 @@ describe('ReactDOMServer', () => {
 
     // TODO: Test that listeners are not registered onto any document/container.
 
-    fit('should render composite components', () => {
+    it('should render composite components', () => {
       class Parent extends React.Component {
         render() {
           return (
@@ -85,7 +85,7 @@ describe('ReactDOMServer', () => {
       );
     });
 
-    fit('should only execute certain lifecycle methods', () => {
+    it('should only execute certain lifecycle methods', () => {
       function runTest() {
         const lifecycle = [];
 
@@ -152,7 +152,7 @@ describe('ReactDOMServer', () => {
       runTest();
     });
 
-    fit('should throw with silly args', () => {
+    it('should throw with silly args', () => {
       expect(
         ReactDOMServer.renderToString.bind(ReactDOMServer, React, {x: 123}),
       ).toThrowError(
@@ -160,7 +160,7 @@ describe('ReactDOMServer', () => {
       );
     });
 
-    fit('should throw prop mapping error for an <iframe /> with invalid props', () => {
+    it('should throw prop mapping error for an <iframe /> with invalid props', () => {
       let caughtErr;
       try {
         ReactDOMServer.renderToString(React, <iframe style="border:none;" />);
@@ -175,7 +175,7 @@ describe('ReactDOMServer', () => {
       );
     });
 
-    fit('should not crash on poisoned hasOwnProperty', () => {
+    it('should not crash on poisoned hasOwnProperty', () => {
       let html;
       expect(
         () =>
@@ -191,7 +191,7 @@ describe('ReactDOMServer', () => {
   });
 
   describe('renderToStaticMarkup', () => {
-    fit('should not put checksum and React ID on components', () => {
+    it('should not put checksum and React ID on components', () => {
       class NestedComponent extends React.Component {
         render() {
           return <div>inner text</div>;
@@ -213,7 +213,7 @@ describe('ReactDOMServer', () => {
       expect(response).toBe('<span><div>inner text</div></span>');
     });
 
-    fit('should not put checksum and React ID on text components', () => {
+    it('should not put checksum and React ID on text components', () => {
       class TestComponent extends React.Component {
         render() {
           return (
@@ -241,7 +241,7 @@ describe('ReactDOMServer', () => {
       expect(response).toBe('');
     });
 
-    fit('should only execute certain lifecycle methods', () => {
+    it('should only execute certain lifecycle methods', () => {
       function runTest() {
         const lifecycle = [];
 
@@ -299,7 +299,7 @@ describe('ReactDOMServer', () => {
       runTest();
     });
 
-    fit('should throw with silly args', () => {
+    it('should throw with silly args', () => {
       expect(
         ReactDOMServer.renderToStaticMarkup.bind(ReactDOMServer, React, {x: 123}),
       ).toThrowError(

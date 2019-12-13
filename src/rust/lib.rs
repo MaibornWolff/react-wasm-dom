@@ -3,7 +3,7 @@
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[macro_use]
-extern crate html5ever;
+extern crate typed_html;
 
 #[allow(dead_code)]
 fn set_panic_hook() {
