@@ -1,9 +1,11 @@
+#![feature(proc_macro_hygiene)]
+
 #[cfg(feature = "wee_alloc")]
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
 #[macro_use]
-extern crate typed_html;
+extern crate render;
 
 #[allow(dead_code)]
 fn set_panic_hook() {

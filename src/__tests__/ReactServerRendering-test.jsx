@@ -34,12 +34,12 @@ describe('ReactDOMServer', () => {
     });
 
     // TODO: no idea how to self close a tag
-    it('should generate simple markup for self-closing tags', () => {
+    fit('should generate simple markup for self-closing tags', () => {
       const response = ReactDOMServer.renderToString(React, <img />);
       expect(response).toMatch(new RegExp('<img data-reactroot=""' + '/>'));
     });
 
-    it('should generate comment markup for component returns null', () => {
+    fit('should generate comment markup for component returns null', () => {
       class NullComponent extends React.Component {
         render() {
           return null;
