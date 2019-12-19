@@ -4,9 +4,6 @@
 #[global_allocator]
 static ALLOC: wee_alloc::WeeAlloc = wee_alloc::WeeAlloc::INIT;
 
-#[macro_use]
-extern crate render;
-
 #[allow(dead_code)]
 fn set_panic_hook() {
     // When the `console_error_panic_hook` feature is enabled, we can call the
@@ -16,6 +13,7 @@ fn set_panic_hook() {
 }
 
 mod component;
+mod html;
 mod jsx;
 mod react;
 mod renderer;

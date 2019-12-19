@@ -1,10 +1,10 @@
 use crate::{
+    html::{HTMLElement, HTMLValue},
     jsx::{Jsx, JsxProps},
     react::{React, ReactComponent},
 };
 
 use js_sys::{JsString, Reflect};
-use render::{Raw, Render, SimpleElement};
 use std::collections::HashMap;
 use wasm_bindgen::{prelude::*, JsCast};
 
@@ -28,7 +28,7 @@ pub fn render_server_side(react: &React, jsx: JsValue, is_static: bool) -> Resul
         let html = render_jsx_to_string(None, jsx, is_static)?;
 
         match html {
-            Some(html) => Ok(html.render()),
+            Some(html) => Ok(format!("{}", html)),
             None => Ok("".to_string()),
         }
     } else {
@@ -53,11 +53,11 @@ pub fn render_server_side(react: &React, jsx: JsValue, is_static: bool) -> Resul
     }
 }
 
-fn render_jsx_to_string<'a>(
-    root: Option<SimpleElement<'a, String>>,
+fn render_jsx_to_string(
+    root: Option<HTMLElement>,
     jsx: &Jsx,
     is_static: bool,
-) -> Result<Option<SimpleElement<'a, String>>, JsValue> {
+) -> Result<Option<HTMLElement>, JsValue> {
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"JSX".into(), &jsx);
 
@@ -88,12 +88,12 @@ fn render_jsx_to_string<'a>(
     }
 }
 
-fn render_intrinsic<'a>(
-    mut root: Option<SimpleElement<'a, String>>,
+fn render_intrinsic(
+    mut root: Option<HTMLElement>,
     intrinsic: String,
     jsx: &Jsx,
     is_static: bool,
-) -> Result<Option<SimpleElement<'a, String>>, JsValue> {
+) -> Result<Option<HTMLElement>, JsValue> {
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
 
@@ -105,18 +105,10 @@ fn render_intrinsic<'a>(
         handle_poisoned_has_own_property(jsx);
     }
 
-    let mut element: SimpleElement<'a, String> = SimpleElement {
-        tag_name: match intrinsic.as_ref() {
-            "a" => "a",
-            "img" => "img",
-            "span" => "span",
-            _ => {
-                web_sys::console::log_2(&"intrinsic unsupported:".into(), &intrinsic.into());
-                unimplemented!();
-            }
-        },
-        attributes: None,
-        contents: None,
+    let mut element = HTMLElement {
+        tag: intrinsic,
+        attributes: HashMap::new(),
+        children: Vec::new(),
     };
     for prop in js_sys::Object::entries(&jsx.props()).values() {
         let prop: js_sys::Array = prop?.into();
@@ -140,16 +132,7 @@ fn render_intrinsic<'a>(
         }
     }
     if !is_static && root.is_none() {
-        match &mut element.attributes {
-            Some(attributes) => {
-                attributes.insert("data-reactroot", "");
-            }
-            None => {
-                let mut map = HashMap::new();
-                map.insert("data-reactroot", "");
-                element.attributes = Some(map);
-            }
-        }
+        element.attributes.insert("data-reactroot", "".to_string());
     }
 
     let props = jsx.props();
@@ -163,10 +146,7 @@ fn render_intrinsic<'a>(
         Some(root) => {
             // web_sys::console::log_2(&"PUSH".into(), &element.to_string().into());
             // root.contents.push(element);
-            match &mut root.contents {
-                Some(contents) => contents.push_str(&element.render()),
-                None => root.contents = Some(element.render()),
-            }
+            root.children.push(HTMLValue::Element(element));
         }
         None => {
             root = Some(element);
@@ -212,11 +192,11 @@ fn handle_poisoned_has_own_property(jsx: &Jsx) {
     web_sys::console::error_1(&err.into());
 }
 
-fn render_intrinsic_to_string<'a>(
-    mut root: Option<SimpleElement<'a, String>>,
+fn render_intrinsic_to_string(
+    mut root: Option<HTMLElement>,
     js_val: js_sys::Object,
     is_static: bool,
-) -> Option<SimpleElement<'a, String>> {
+) -> Option<HTMLElement> {
     web_sys::console::log_2(&"RENDER_INTRINSIC".into(), &js_val);
     match js_val.dyn_ref::<JsString>() {
         Some(js_string) => {
@@ -232,12 +212,11 @@ fn render_intrinsic_to_string<'a>(
     root
 }
 
-fn render_text_component<'a>(root: &mut Option<SimpleElement<'a, String>>, s: String) {
+fn render_text_component(root: &mut Option<HTMLElement>, s: String) {
     match root {
-        Some(root) => match &mut root.contents {
-            Some(contents) => contents.push_str(s.as_ref()),
-            None => root.contents = Some(s),
-        },
+        Some(root) => {
+            root.children.push(HTMLValue::Text(s));
+        }
         None => {
             web_sys::console::log_1(&"render_text_component NONE".into());
             unimplemented!();
