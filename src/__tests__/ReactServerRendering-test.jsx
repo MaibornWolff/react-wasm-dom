@@ -26,20 +26,19 @@ describe('ReactDOMServer', () => {
   });
 
   describe('renderToString', () => {
-    fit('should generate simple markup', () => {
+    it('should generate simple markup', () => {
       const response = ReactDOMServer.renderToString(React, <span>hello world</span>);
       expect(response).toMatch(
         new RegExp('<span data-reactroot=""' + '>hello world</span>'),
       );
     });
 
-    // TODO: no idea how to self close a tag
-    fit('should generate simple markup for self-closing tags', () => {
+    it('should generate simple markup for self-closing tags', () => {
       const response = ReactDOMServer.renderToString(React, <img />);
       expect(response).toMatch(new RegExp('<img data-reactroot=""' + '/>'));
     });
 
-    fit('should generate comment markup for component returns null', () => {
+    it('should generate comment markup for component returns null', () => {
       class NullComponent extends React.Component {
         render() {
           return null;
@@ -52,7 +51,7 @@ describe('ReactDOMServer', () => {
 
     // TODO: Test that listeners are not registered onto any document/container.
 
-    it('should render composite components', () => {
+    fit('should render composite components', () => {
       class Parent extends React.Component {
         render() {
           return (

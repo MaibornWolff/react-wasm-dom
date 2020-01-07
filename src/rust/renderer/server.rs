@@ -154,20 +154,20 @@ fn render_intrinsic(
     };
     // web_sys::console::log_2(&"AFTER".into(), &root.unwrap().clone().to_string().into());
 
-    let mut is_first = true;
+    let mut append_empty_comment = false;
 
     if let Some(children) = props.children() {
         if let Some(children) = children.dyn_ref::<js_sys::Array>() {
             for child in children.values() {
-                if !is_static && !is_first {
-                    // TODO empty html comment
-                } else {
-                    is_first = false;
-                }
-                root = render_intrinsic_to_string(root, child?.into(), is_static);
+                root = render_intrinsic_to_string(
+                    root,
+                    child?.into(),
+                    is_static,
+                    &mut append_empty_comment,
+                );
             }
         } else {
-            root = render_intrinsic_to_string(root, children, is_static);
+            root = render_intrinsic_to_string(root, children, is_static, &mut false);
         }
     }
     Ok(root)
@@ -196,12 +196,18 @@ fn render_intrinsic_to_string(
     mut root: Option<HTMLElement>,
     js_val: js_sys::Object,
     is_static: bool,
+    append_empty_comment: &mut bool,
 ) -> Option<HTMLElement> {
     web_sys::console::log_2(&"RENDER_INTRINSIC".into(), &js_val);
     match js_val.dyn_ref::<JsString>() {
         Some(js_string) => {
             let s: String = js_string.into();
+
+            if *append_empty_comment {
+                render_empty_comment(&mut root);
+            }
             render_text_component(&mut root, s);
+            *append_empty_comment = true;
         }
         None => {
             web_sys::console::log_2(&"RENDER_INTRINSIC NONE".into(), &js_val);
@@ -210,6 +216,18 @@ fn render_intrinsic_to_string(
         }
     };
     root
+}
+
+fn render_empty_comment(root: &mut Option<HTMLElement>) {
+    match root {
+        Some(root) => {
+            root.children.push(HTMLValue::Comment);
+        }
+        None => {
+            web_sys::console::log_1(&"render_empty_comment NONE".into());
+            unimplemented!();
+        }
+    };
 }
 
 fn render_text_component(root: &mut Option<HTMLElement>, s: String) {
