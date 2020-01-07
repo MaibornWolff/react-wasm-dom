@@ -11,9 +11,7 @@
   "dependencies": {
     "express": "^4.17.1",
     "react": "^16",
-    "react-dom": "^16",
-    "react-wasm-dom": "^0.1.0",
-    "react-wasm-dom0": "^0.1.0"
+    "react-dom": "^16"
   },
   "devDependencies": {
     "@babel/core": "^7.4.3",

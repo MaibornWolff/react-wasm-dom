@@ -67,7 +67,7 @@ module.exports = [
     entry: "./src/server/index.tsx",
     target: "node",
     node: {
-      __dirname: false,
+      __dirname: true,
       __filename: false
     },
     output: {
