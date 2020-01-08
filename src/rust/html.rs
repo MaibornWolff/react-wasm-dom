@@ -27,7 +27,7 @@ impl fmt::Display for HTMLElement {
         if self.is_self_closing() {
             write!(f, "/>")?;
         } else {
-            write!(f, ">{}</{}>", self.children.iter().format(""), self.tag)?;
+            write!(f, ">{}</{}>", self.children.iter().join(""), self.tag)?;
         }
         Ok(())
     }

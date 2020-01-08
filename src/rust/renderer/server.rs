@@ -2,6 +2,7 @@ use crate::{
     html::{HTMLElement, HTMLValue},
     jsx::{Jsx, JsxProps},
     react::{React, ReactComponent},
+    renderer::css::add_style_to_attributes,
 };
 
 use js_sys::{JsString, Reflect};
@@ -120,6 +121,9 @@ fn render_intrinsic(
         let attr_name: String = key.unchecked_into::<JsString>().into();
         match attr_name.as_ref() {
             "hasOwnProperty" | "children" => {}
+            "style" => {
+                add_style_to_attributes(value, attr_name, &mut element);
+            }
             _ => {
                 let attr_value: String = value.unchecked_into::<JsString>().into();
                 element.attributes.insert(attr_name, attr_value);
@@ -135,7 +139,7 @@ fn render_intrinsic(
     let props = jsx.props();
     let props = props.unchecked_ref::<JsxProps>();
 
-    #[cfg(debug_assertions)]
+    // #[cfg(debug_assertions)]
     web_sys::console::log_2(&"PROPS".into(), &props);
 
     let mut append_empty_comment = false;
@@ -150,7 +154,7 @@ fn render_intrinsic(
                     is_static,
                     false,
                     &mut append_empty_comment,
-                );
+                )?;
             }
         } else {
             element = render_intrinsic_to_string(
@@ -159,7 +163,7 @@ fn render_intrinsic(
                 is_static,
                 false,
                 &mut false,
-            );
+            )?;
         }
     }
     if let Some(mut parent) = parent {
@@ -195,7 +199,7 @@ fn render_intrinsic_to_string(
     is_static: bool,
     is_root: bool,
     append_empty_comment: &mut bool,
-) -> Option<HTMLElement> {
+) -> Result<Option<HTMLElement>, JsValue> {
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"RENDER_INTRINSIC".into(), &js_val);
     match js_val.dyn_ref::<JsString>() {
@@ -212,12 +216,10 @@ fn render_intrinsic_to_string(
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"RENDER_INTRINSIC NONE".into(), &js_val);
             let jsx = js_val.unchecked_ref::<Jsx>();
-            parent = render_jsx_to_string(Some(parent), jsx, is_static, is_root)
-                .unwrap()
-                .unwrap();
+            parent = render_jsx_to_string(Some(parent), jsx, is_static, is_root)?.unwrap();
         }
     };
-    Some(parent)
+    Ok(Some(parent))
 }
 
 fn render_empty_comment(parent: &mut HTMLElement) {

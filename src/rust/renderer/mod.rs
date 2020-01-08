@@ -7,6 +7,7 @@ use js_sys::JsString;
 use wasm_bindgen::{prelude::*, JsCast};
 use web_sys::{Document, Element};
 
+pub mod css;
 pub mod server;
 
 #[wasm_bindgen]
