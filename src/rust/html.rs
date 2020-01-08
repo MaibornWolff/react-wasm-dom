@@ -4,7 +4,7 @@ use std::fmt;
 
 pub struct HTMLElement {
     pub tag: String,
-    pub attributes: HashMap<&'static str, String>,
+    pub attributes: HashMap<String, String>,
     pub children: Vec<HTMLValue>,
 }
 
@@ -43,10 +43,7 @@ impl fmt::Display for HTMLValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Element(element) => write!(f, "{}", element),
-            Self::Text(text) => {
-                web_sys::console::log_2(&"TEXT".into(), &text.into());
-                write!(f, "{}", text)
-            }
+            Self::Text(text) => write!(f, "{}", text),
             Self::Comment => write!(f, "<!-- -->"),
         }
     }

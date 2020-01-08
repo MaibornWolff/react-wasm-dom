@@ -24,8 +24,7 @@ pub fn render_server_side(react: &React, jsx: JsValue, is_static: bool) -> Resul
     if react.is_valid_element(&jsx) {
         let jsx = jsx.unchecked_ref::<Jsx>();
 
-        // let html: Option<DOMTree<String>> = None;
-        let html = render_jsx_to_string(None, jsx, is_static)?;
+        let html = render_jsx_to_string(None, jsx, is_static, true)?;
 
         match html {
             Some(html) => Ok(format!("{}", html)),
@@ -54,9 +53,10 @@ pub fn render_server_side(react: &React, jsx: JsValue, is_static: bool) -> Resul
 }
 
 fn render_jsx_to_string(
-    root: Option<HTMLElement>,
+    parent: Option<HTMLElement>,
     jsx: &Jsx,
     is_static: bool,
+    is_root: bool,
 ) -> Result<Option<HTMLElement>, JsValue> {
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"JSX".into(), &jsx);
@@ -72,9 +72,9 @@ fn render_jsx_to_string(
             }
             let jsx = component.render();
             if jsx.is_null() {
-                Ok(root)
+                Ok(parent)
             } else {
-                render_jsx_to_string(root, jsx.unchecked_ref::<Jsx>(), is_static)
+                render_jsx_to_string(parent, jsx.unchecked_ref::<Jsx>(), is_static, is_root)
             }
         }
         ReactComponent::Functional(function) => {
@@ -82,17 +82,20 @@ fn render_jsx_to_string(
                 .call0(&JsValue::NULL)
                 .expect("Functional Component initialization failed")
                 .unchecked_into();
-            render_jsx_to_string(root, &jsx, is_static)
+            render_jsx_to_string(parent, &jsx, is_static, is_root)
         }
-        ReactComponent::Intrinsic(intrinsic) => render_intrinsic(root, intrinsic, jsx, is_static),
+        ReactComponent::Intrinsic(intrinsic) => {
+            render_intrinsic(parent, intrinsic, jsx, is_static, is_root)
+        }
     }
 }
 
 fn render_intrinsic(
-    mut root: Option<HTMLElement>,
+    parent: Option<HTMLElement>,
     intrinsic: String,
     jsx: &Jsx,
     is_static: bool,
+    is_root: bool,
 ) -> Result<Option<HTMLElement>, JsValue> {
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
@@ -117,22 +120,16 @@ fn render_intrinsic(
         let attr_name: String = key.unchecked_into::<JsString>().into();
         match attr_name.as_ref() {
             "hasOwnProperty" | "children" => {}
-            "accessKey" => {
-                // if let Ok(value) = value.dyn_into::<JsString>() {
-                //     let attr_value: String = value.into();
-                //     element.attrs.accesskey = Some(attr_value);
-                // }
-            }
             _ => {
-                web_sys::console::warn_2(
-                    &"Unknown attribute at `a` tag:".into(),
-                    &attr_name.into(),
-                );
+                let attr_value: String = value.unchecked_into::<JsString>().into();
+                element.attributes.insert(attr_name, attr_value);
             }
         }
     }
-    if !is_static && root.is_none() {
-        element.attributes.insert("data-reactroot", "".to_string());
+    if !is_static && is_root {
+        element
+            .attributes
+            .insert("data-reactroot".to_string(), "".to_string());
     }
 
     let props = jsx.props();
@@ -141,36 +138,36 @@ fn render_intrinsic(
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"PROPS".into(), &props);
 
-    // web_sys::console::log_2(&"BEFORE".into(), &root.unwrap().clone().to_string().into());
-    match &mut root {
-        Some(root) => {
-            // web_sys::console::log_2(&"PUSH".into(), &element.to_string().into());
-            // root.contents.push(element);
-            root.children.push(HTMLValue::Element(element));
-        }
-        None => {
-            root = Some(element);
-        }
-    };
-    // web_sys::console::log_2(&"AFTER".into(), &root.unwrap().clone().to_string().into());
-
     let mut append_empty_comment = false;
+    let mut element = Some(element);
 
     if let Some(children) = props.children() {
         if let Some(children) = children.dyn_ref::<js_sys::Array>() {
             for child in children.values() {
-                root = render_intrinsic_to_string(
-                    root,
+                element = render_intrinsic_to_string(
+                    element.unwrap(),
                     child?.into(),
                     is_static,
+                    false,
                     &mut append_empty_comment,
                 );
             }
         } else {
-            root = render_intrinsic_to_string(root, children, is_static, &mut false);
+            element = render_intrinsic_to_string(
+                element.unwrap(),
+                children,
+                is_static,
+                false,
+                &mut false,
+            );
         }
     }
-    Ok(root)
+    if let Some(mut parent) = parent {
+        parent.children.push(HTMLValue::Element(element.unwrap()));
+        Ok(Some(parent))
+    } else {
+        Ok(element)
+    }
 }
 
 fn check_style_prop(jsx: &Jsx) -> Result<(), JsValue> {
@@ -193,51 +190,40 @@ fn handle_poisoned_has_own_property(jsx: &Jsx) {
 }
 
 fn render_intrinsic_to_string(
-    mut root: Option<HTMLElement>,
+    mut parent: HTMLElement,
     js_val: js_sys::Object,
     is_static: bool,
+    is_root: bool,
     append_empty_comment: &mut bool,
 ) -> Option<HTMLElement> {
+    #[cfg(debug_assertions)]
     web_sys::console::log_2(&"RENDER_INTRINSIC".into(), &js_val);
     match js_val.dyn_ref::<JsString>() {
         Some(js_string) => {
             let s: String = js_string.into();
 
             if *append_empty_comment {
-                render_empty_comment(&mut root);
+                render_empty_comment(&mut parent);
             }
-            render_text_component(&mut root, s);
+            render_text_component(&mut parent, s);
             *append_empty_comment = true;
         }
         None => {
+            #[cfg(debug_assertions)]
             web_sys::console::log_2(&"RENDER_INTRINSIC NONE".into(), &js_val);
             let jsx = js_val.unchecked_ref::<Jsx>();
-            root = render_jsx_to_string(root, jsx, is_static).unwrap();
+            parent = render_jsx_to_string(Some(parent), jsx, is_static, is_root)
+                .unwrap()
+                .unwrap();
         }
     };
-    root
+    Some(parent)
 }
 
-fn render_empty_comment(root: &mut Option<HTMLElement>) {
-    match root {
-        Some(root) => {
-            root.children.push(HTMLValue::Comment);
-        }
-        None => {
-            web_sys::console::log_1(&"render_empty_comment NONE".into());
-            unimplemented!();
-        }
-    };
+fn render_empty_comment(parent: &mut HTMLElement) {
+    parent.children.push(HTMLValue::Comment);
 }
 
-fn render_text_component(root: &mut Option<HTMLElement>, s: String) {
-    match root {
-        Some(root) => {
-            root.children.push(HTMLValue::Text(s));
-        }
-        None => {
-            web_sys::console::log_1(&"render_text_component NONE".into());
-            unimplemented!();
-        }
-    };
+fn render_text_component(parent: &mut HTMLElement, s: String) {
+    parent.children.push(HTMLValue::Text(s));
 }

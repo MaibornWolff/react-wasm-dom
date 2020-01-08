@@ -51,7 +51,7 @@ describe('ReactDOMServer', () => {
 
     // TODO: Test that listeners are not registered onto any document/container.
 
-    fit('should render composite components', () => {
+    it('should render composite components', () => {
       class Parent extends React.Component {
         render() {
           return (
@@ -212,7 +212,7 @@ describe('ReactDOMServer', () => {
       expect(response).toBe('<span><div>inner text</div></span>');
     });
 
-    it('should not put checksum and React ID on text components', () => {
+    xit('should not put checksum and React ID on text components', () => {
       class TestComponent extends React.Component {
         render() {
           return (
@@ -228,7 +228,7 @@ describe('ReactDOMServer', () => {
       expect(response).toBe('<span>hello world</span>');
     });
 
-    it('should not use comments for empty nodes', () => {
+    xit('should not use comments for empty nodes', () => {
       class TestComponent extends React.Component {
         render() {
           return null;
@@ -240,7 +240,7 @@ describe('ReactDOMServer', () => {
       expect(response).toBe('');
     });
 
-    it('should only execute certain lifecycle methods', () => {
+    xit('should only execute certain lifecycle methods', () => {
       function runTest() {
         const lifecycle = [];
 
@@ -306,7 +306,7 @@ describe('ReactDOMServer', () => {
       );
     });
 
-    it('allows setState in componentWillMount without using DOM', () => {
+    xit('allows setState in componentWillMount without using DOM', () => {
       class Component extends React.Component {
         UNSAFE_componentWillMount() {
           this.setState({text: 'hello, world'});
@@ -320,7 +320,7 @@ describe('ReactDOMServer', () => {
       expect(markup).toContain('hello, world');
     });
 
-    it('allows setState in componentWillMount with custom constructor', () => {
+    xit('allows setState in componentWillMount with custom constructor', () => {
       class Component extends React.Component {
         constructor() {
           super();
@@ -339,7 +339,7 @@ describe('ReactDOMServer', () => {
       expect(markup).toContain('hello, world');
     });
 
-    it('renders with props when using custom constructor', () => {
+    xit('renders with props when using custom constructor', () => {
       class Component extends React.Component {
         constructor() {
           super();
@@ -356,7 +356,7 @@ describe('ReactDOMServer', () => {
       expect(markup).toContain('hello, world');
     });
 
-    it('renders with context when using custom constructor', () => {
+    xit('renders with context when using custom constructor', () => {
       class Component extends React.Component {
         constructor() {
           super();
@@ -395,7 +395,7 @@ describe('ReactDOMServer', () => {
       expect(markup).toContain('hello, world');
     });
 
-    it('renders with new context API', () => {
+    xit('renders with new context API', () => {
       const Context = React.createContext(0);
 
       function Consumer(props) {
@@ -431,7 +431,7 @@ describe('ReactDOMServer', () => {
       expect(results).toEqual([2, 1, 3, 1]);
     });
 
-    it('renders with dispatcher.readContext mechanism', () => {
+    xit('renders with dispatcher.readContext mechanism', () => {
       const Context = React.createContext(0);
 
       function readContext(context) {
@@ -469,7 +469,7 @@ describe('ReactDOMServer', () => {
       expect(results).toEqual([2, 1, 3, 1]);
     });
 
-    it('renders context API, reentrancy', () => {
+    xit('renders context API, reentrancy', () => {
       const Context = React.createContext(0);
 
       function Consumer(props) {
@@ -518,7 +518,7 @@ describe('ReactDOMServer', () => {
       expect(reentrantResults).toEqual([2, 1, 3, 1]);
     });
 
-    it('renders components with different batching strategies', () => {
+    xit('renders components with different batching strategies', () => {
       class StaticComponent extends React.Component {
         render() {
           const staticContent = ReactDOMServer.renderToStaticMarkup(
@@ -551,7 +551,7 @@ describe('ReactDOMServer', () => {
       ).not.toThrow();
     });
 
-    it('renders synchronously resolved lazy component', () => {
+    xit('renders synchronously resolved lazy component', () => {
       const LazyFoo = React.lazy(() => ({
         then(resolve) {
           resolve({
@@ -567,7 +567,7 @@ describe('ReactDOMServer', () => {
       );
     });
 
-    it('throws error from synchronously rejected lazy component', () => {
+    xit('throws error from synchronously rejected lazy component', () => {
       const LazyFoo = React.lazy(() => ({
         then(resolve, reject) {
           reject(new Error('Bad lazy'));
@@ -580,7 +580,7 @@ describe('ReactDOMServer', () => {
     });
   });
 
-  describe('renderToNodeStream', () => {
+  xdescribe('renderToNodeStream', () => {
     it('should generate simple markup', () => {
       const SuccessfulElement = React.createElement(() => <img />);
       const response = ReactDOMServer.renderToNodeStream(SuccessfulElement);
@@ -603,7 +603,7 @@ describe('ReactDOMServer', () => {
     });
   });
 
-  describe('renderToStaticNodeStream', () => {
+  xdescribe('renderToStaticNodeStream', () => {
     it('should generate simple markup', () => {
       const SuccessfulElement = React.createElement(() => <img />);
       const response = ReactDOMServer.renderToStaticNodeStream(
@@ -626,7 +626,7 @@ describe('ReactDOMServer', () => {
     });
   });
 
-  it('warns with a no-op when an async setState is triggered', () => {
+  xit('warns with a no-op when an async setState is triggered', () => {
     class Foo extends React.Component {
       UNSAFE_componentWillMount() {
         this.setState({text: 'hello'});
@@ -653,7 +653,7 @@ describe('ReactDOMServer', () => {
     jest.runOnlyPendingTimers();
   });
 
-  it('warns with a no-op when an async forceUpdate is triggered', () => {
+  xit('warns with a no-op when an async forceUpdate is triggered', () => {
     class Baz extends React.Component {
       UNSAFE_componentWillMount() {
         this.forceUpdate();
@@ -678,42 +678,42 @@ describe('ReactDOMServer', () => {
     expect(markup).toBe('<div></div>');
   });
 
-  if (!__EXPERIMENTAL__) {
-    it('throws for unsupported types on the server', () => {
-      expect(() => {
-        ReactDOMServer.renderToString(<React.Suspense />);
-      }).toThrow('ReactDOMServer does not yet support Suspense.');
+  // if (!__EXPERIMENTAL__) {
+  //   xit('throws for unsupported types on the server', () => {
+  //     expect(() => {
+  //       ReactDOMServer.renderToString(<React.Suspense />);
+  //     }).toThrow('ReactDOMServer does not yet support Suspense.');
 
-      async function fakeImport(result) {
-        return {default: result};
-      }
+  //     async function fakeImport(result) {
+  //       return {default: result};
+  //     }
 
-      expect(() => {
-        const LazyFoo = React.lazy(() =>
-          fakeImport(
-            new Promise(resolve =>
-              resolve(function Foo() {
-                return <div />;
-              }),
-            ),
-          ),
-        );
-        ReactDOMServer.renderToString(<LazyFoo />);
-      }).toThrow('ReactDOMServer does not yet support lazy-loaded components.');
-    });
+  //     expect(() => {
+  //       const LazyFoo = React.lazy(() =>
+  //         fakeImport(
+  //           new Promise(resolve =>
+  //             resolve(function Foo() {
+  //               return <div />;
+  //             }),
+  //           ),
+  //         ),
+  //       );
+  //       ReactDOMServer.renderToString(<LazyFoo />);
+  //     }).toThrow('ReactDOMServer does not yet support lazy-loaded components.');
+  //   });
 
-    it('throws when suspending on the server', () => {
-      function AsyncFoo() {
-        throw new Promise(() => {});
-      }
+  //   xit('throws when suspending on the server', () => {
+  //     function AsyncFoo() {
+  //       throw new Promise(() => {});
+  //     }
 
-      expect(() => {
-        ReactDOMServer.renderToString(<AsyncFoo />);
-      }).toThrow('ReactDOMServer does not yet support Suspense.');
-    });
-  }
+  //     expect(() => {
+  //       ReactDOMServer.renderToString(<AsyncFoo />);
+  //     }).toThrow('ReactDOMServer does not yet support Suspense.');
+  //   });
+  // }
 
-  it('does not get confused by throwing null', () => {
+  xit('does not get confused by throwing null', () => {
     function Bad() {
       // eslint-disable-next-line no-throw-literal
       throw null;
@@ -731,7 +731,7 @@ describe('ReactDOMServer', () => {
     expect(error).toBe(null);
   });
 
-  it('does not get confused by throwing undefined', () => {
+  xit('does not get confused by throwing undefined', () => {
     function Bad() {
       // eslint-disable-next-line no-throw-literal
       throw undefined;
@@ -749,7 +749,7 @@ describe('ReactDOMServer', () => {
     expect(error).toBe(undefined);
   });
 
-  it('does not get confused by throwing a primitive', () => {
+  xit('does not get confused by throwing a primitive', () => {
     function Bad() {
       // eslint-disable-next-line no-throw-literal
       throw 'foo';
@@ -767,7 +767,7 @@ describe('ReactDOMServer', () => {
     expect(error).toBe('foo');
   });
 
-  it('should throw (in dev) when children are mutated during render', () => {
+  xit('should throw (in dev) when children are mutated during render', () => {
     function Wrapper(props) {
       props.children[1] = <p key={1} />; // Mutation is illegal
       return <div>{props.children}</div>;
@@ -795,7 +795,7 @@ describe('ReactDOMServer', () => {
     }
   });
 
-  it('warns about lowercase html but not in svg tags', () => {
+  xit('warns about lowercase html but not in svg tags', () => {
     function CompositeG(props) {
       // Make sure namespace passes through composites
       return <g>{props.children}</g>;
@@ -826,7 +826,7 @@ describe('ReactDOMServer', () => {
     ]);
   });
 
-  it('should warn about contentEditable and children', () => {
+  xit('should warn about contentEditable and children', () => {
     expect(() =>
       ReactDOMServer.renderToString(<div contentEditable={true} children="" />),
     ).toWarnDev(
@@ -837,7 +837,7 @@ describe('ReactDOMServer', () => {
     );
   });
 
-  it('should warn when server rendering a class with a render method that does not extend React.Component', () => {
+  xit('should warn when server rendering a class with a render method that does not extend React.Component', () => {
     class ClassWithRenderNotExtended {
       render() {
         return <div />;
@@ -863,7 +863,7 @@ describe('ReactDOMServer', () => {
 
   // We're just testing importing, not using it.
   // It is important because even isomorphic components may import it.
-  it('can import react-dom in Node environment', () => {
+  xit('can import react-dom in Node environment', () => {
     if (
       typeof requestAnimationFrame !== 'undefined' ||
       global.hasOwnProperty('requestAnimationFrame') ||
@@ -882,7 +882,7 @@ describe('ReactDOMServer', () => {
     }).not.toThrow();
   });
 
-  it('includes a useful stack in warnings', () => {
+  xit('includes a useful stack in warnings', () => {
     function A() {
       return null;
     }
@@ -938,7 +938,7 @@ describe('ReactDOMServer', () => {
     ]);
   });
 
-  it('reports stacks with re-entrant renderToString() calls', () => {
+  xit('reports stacks with re-entrant renderToString() calls', () => {
     function Child2(props) {
       return <span ariaTypo3="no">{props.children}</span>;
     }
@@ -995,7 +995,7 @@ describe('ReactDOMServer', () => {
     ]);
   });
 
-  it('should warn if an invalid contextType is defined', () => {
+  xit('should warn if an invalid contextType is defined', () => {
     const Context = React.createContext();
 
     class ComponentA extends React.Component {
@@ -1034,7 +1034,7 @@ describe('ReactDOMServer', () => {
     );
   });
 
-  it('should not warn when class contextType is null', () => {
+  xit('should not warn when class contextType is null', () => {
     class Foo extends React.Component {
       static contextType = null; // Handy for conditional declaration
       render() {
@@ -1047,7 +1047,7 @@ describe('ReactDOMServer', () => {
     }).toThrow("Cannot read property 'world' of undefined");
   });
 
-  it('should warn when class contextType is undefined', () => {
+  xit('should warn when class contextType is undefined', () => {
     class Foo extends React.Component {
       // This commonly happens with circular deps
       // https://github.com/facebook/react/issues/13969
@@ -1072,7 +1072,7 @@ describe('ReactDOMServer', () => {
     );
   });
 
-  it('should warn when class contextType is an object', () => {
+  xit('should warn when class contextType is an object', () => {
     class Foo extends React.Component {
       // Can happen due to a typo
       static contextType = {
@@ -1096,7 +1096,7 @@ describe('ReactDOMServer', () => {
     );
   });
 
-  it('should warn when class contextType is a primitive', () => {
+  xit('should warn when class contextType is a primitive', () => {
     class Foo extends React.Component {
       static contextType = 'foo';
       render() {
