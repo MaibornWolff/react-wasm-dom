@@ -22,7 +22,7 @@ fn map_style_to_css(value: JsValue) -> String {
     let key = prop.pop();
     let css_prop: String = key.unchecked_into::<JsString>().into();
     if let Some(css_val) = value.dyn_ref::<JsString>() {
-        let css_val: String = css_val.into();
+        let css_val: String = css_val.trim().into();
         format!("{}:{}", css_prop, css_val)
     } else if let Ok(css_val) = value.dyn_into::<js_sys::Number>() {
         let css_val: f64 = css_val.into();

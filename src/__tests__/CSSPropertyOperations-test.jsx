@@ -27,14 +27,14 @@ describe('CSSPropertyOperations', () => {
     expect(html).toContain('"left:0;margin:16px;opacity:0.5;padding:4px"');
   });
 
-  it('should trim values', () => {
+  fit('should trim values', () => {
     const styles = {
       left: '16 ',
       opacity: 0.5,
       right: ' 4 ',
     };
     const div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(div);
+    const html = ReactDOMServer.renderToString(React, div);
     expect(html).toContain('"left:16;opacity:0.5;right:4"');
   });
 
