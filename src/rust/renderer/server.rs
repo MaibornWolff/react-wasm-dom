@@ -139,7 +139,7 @@ fn render_intrinsic(
     let props = jsx.props();
     let props = props.unchecked_ref::<JsxProps>();
 
-    // #[cfg(debug_assertions)]
+    #[cfg(debug_assertions)]
     web_sys::console::log_2(&"PROPS".into(), &props);
 
     let mut append_empty_comment = false;

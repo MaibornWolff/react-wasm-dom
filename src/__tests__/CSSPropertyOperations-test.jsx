@@ -38,36 +38,36 @@ describe('CSSPropertyOperations', () => {
     expect(html).toContain('"left:16;opacity:0.5;right:4"');
   });
 
-  it('should not append `px` to styles that might need a number', () => {
+  fit('should not append `px` to styles that might need a number', () => {
     const styles = {
       flex: 0,
       opacity: 0.5,
     };
     const div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(div);
+    const html = ReactDOMServer.renderToString(React, div);
     expect(html).toContain('"flex:0;opacity:0.5"');
   });
 
-  it('should create vendor-prefixed markup correctly', () => {
+  fit('should create vendor-prefixed markup correctly', () => {
     const styles = {
       msTransition: 'none',
-      mozTransition: 'none',
+      MozTransition: 'none',
     };
     const div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(div);
+    const html = ReactDOMServer.renderToString(React, div);
     expect(html).toContain('"-ms-transition:none;-moz-transition:none"');
   });
 
-  it('should not hyphenate custom CSS property', () => {
+  fit('should not hyphenate custom CSS property', () => {
     const styles = {
       '--someColor': '#000000',
     };
     const div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(div);
+    const html = ReactDOMServer.renderToString(React, div);
     expect(html).toContain('"--someColor:#000000"');
   });
 
-  it('should set style attribute when styles exist', () => {
+  fit('should set style attribute when styles exist', () => {
     const styles = {
       backgroundColor: '#000',
       display: 'none',

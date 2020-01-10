@@ -20,14 +20,19 @@ fn map_style_to_css(value: JsValue) -> String {
     let prop: js_sys::Array = value.into();
     let value = prop.pop();
     let key = prop.pop();
-    let css_prop: String = key.unchecked_into::<JsString>().into();
+    let mut css_prop: String = key.unchecked_into::<JsString>().into();
+    let is_custom_css_prop = css_prop.starts_with("--");
+    css_prop = if is_custom_css_prop {
+        css_prop
+    } else {
+        hyphenate_style_name(css_prop)
+    };
     if let Some(css_val) = value.dyn_ref::<JsString>() {
         let css_val: String = css_val.trim().into();
         format!("{}:{}", css_prop, css_val)
     } else if let Ok(css_val) = value.dyn_into::<js_sys::Number>() {
         let css_val: f64 = css_val.into();
-        // TODO check for custom prop
-        let suffix = if css_val == 0. || is_unitless(css_prop.as_ref()) {
+        let suffix = if css_val == 0. || is_unitless(css_prop.as_ref()) || is_custom_css_prop {
             ""
         } else {
             "px"
@@ -36,6 +41,22 @@ fn map_style_to_css(value: JsValue) -> String {
     } else {
         "".to_string()
     }
+}
+
+fn hyphenate_style_name(css_prop: String) -> String {
+    let mut result = String::with_capacity(css_prop.len() + 3);
+    css_prop.chars().for_each(|c| {
+        if c.is_uppercase() {
+            result.push('-');
+            result.push_str(c.to_lowercase().to_string().as_ref());
+        } else {
+            result.push(c);
+        }
+    });
+    if result.starts_with("ms-") {
+        result.insert_str(0, "-");
+    }
+    result
 }
 
 fn is_unitless(css_prop: &str) -> bool {
