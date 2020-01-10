@@ -18,5 +18,6 @@
   "eslint.validate": [
     { "language": "typescript", "autoFix": true },
     { "language": "typescriptreact", "autoFix": true }
-  ]
+  ],
+  "stylelint.autoFixOnSave": false
 }
