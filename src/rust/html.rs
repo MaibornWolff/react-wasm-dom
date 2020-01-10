@@ -21,7 +21,7 @@ impl fmt::Display for HTMLElement {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "<{}", self.tag)?;
         for (attr_key, attr_value) in self.attributes.iter() {
-            write!(f, " {}=\"{}\"", attr_key, attr_value)?;
+            write!(f, " {}=\"{}\"", attr_key, escape_html(attr_value))?;
         }
         if self.is_self_closing() {
             write!(f, "/>")?;
@@ -52,16 +52,18 @@ impl fmt::Display for HTMLValue {
         match self {
             Self::Element(element) => write!(f, "{}", element),
             Self::Text(text) => {
-                let escaped_text = text
-                    .replace("&", "&amp;")
-                    .replace("\"", "&quot;")
-                    .replace("'", "&#x27;")
-                    .replace(">", "&gt;")
-                    .replace("<", "&lt;");
-                write!(f, "{}", escaped_text)?;
+                write!(f, "{}", escape_html(text))?;
                 Ok(())
             }
             Self::Comment => write!(f, "<!-- -->"),
         }
     }
+}
+
+fn escape_html(html: &String) -> String {
+    html.replace("&", "&amp;")
+        .replace("\"", "&quot;")
+        .replace("'", "&#x27;")
+        .replace(">", "&gt;")
+        .replace("<", "&lt;")
 }

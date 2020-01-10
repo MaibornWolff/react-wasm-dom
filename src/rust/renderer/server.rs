@@ -127,11 +127,14 @@ fn render_intrinsic(
             _ => {
                 let attr_value: String = if let Some(attr_value) = value.dyn_ref::<JsString>() {
                     attr_value.into()
-                } else if let Ok(attr_value) = value.dyn_into::<js_sys::Number>() {
+                } else if let Some(attr_value) = value.dyn_ref::<js_sys::Number>() {
                     attr_value.to_string(10)?.into()
+                } else if let Some(attr_value) = value.dyn_ref::<js_sys::Object>() {
+                    attr_value.to_string().into()
                 } else {
                     web_sys::console::error_2(
-                        &"attribute must either be string or number on intrinsic element:".into(),
+                        &"attribute must either be string, number or object on intrinsic element:"
+                            .into(),
                         &attr_name.into(),
                     );
                     panic!();
