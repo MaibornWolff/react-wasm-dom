@@ -1,4 +1,3 @@
-use itertools::Itertools;
 use std::collections::HashMap;
 use std::fmt;
 
@@ -27,7 +26,16 @@ impl fmt::Display for HTMLElement {
         if self.is_self_closing() {
             write!(f, "/>")?;
         } else {
-            write!(f, ">{}</{}>", self.children.iter().join(""), self.tag)?;
+            write!(
+                f,
+                ">{}</{}>",
+                self.children
+                    .iter()
+                    .map(|val| format!("{}", val))
+                    .collect::<Vec<String>>()
+                    .join(""),
+                self.tag
+            )?;
         }
         Ok(())
     }

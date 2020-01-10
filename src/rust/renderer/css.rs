@@ -1,6 +1,5 @@
 use crate::html::HTMLElement;
 
-use itertools::Itertools;
 use js_sys::JsString;
 use wasm_bindgen::{prelude::*, JsCast};
 
@@ -11,6 +10,7 @@ pub fn add_style_to_attributes(value: JsValue, attr_name: String, element: &mut 
         .into_iter()
         .filter_map(Result::ok)
         .map(map_style_to_css)
+        .collect::<Vec<String>>()
         .join(";");
     let attr_value = format!("{}", attr_value);
     element.attributes.insert(attr_name, attr_value);
