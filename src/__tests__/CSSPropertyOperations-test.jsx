@@ -73,18 +73,17 @@ describe('CSSPropertyOperations', () => {
       display: 'none',
     };
     let div = <div style={styles} />;
-    const root = document.createElement('div');
-    div = ReactDOM.render(div, root);
-    expect(/style=".*"/.test(root.innerHTML)).toBe(true);
+    const html = ReactDOMServer.renderToString(React, div);
+    expect(/style=".*"/.test(html)).toBe(true);
   });
 
-  it('should not set style attribute when no styles exist', () => {
+  fit('should not set style attribute when no styles exist', () => {
     const styles = {
       backgroundColor: null,
       display: null,
     };
     const div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(div);
+    const html = ReactDOMServer.renderToString(React, div);
     expect(/style=/.test(html)).toBe(false);
   });
 

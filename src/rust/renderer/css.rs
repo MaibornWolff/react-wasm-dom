@@ -9,17 +9,22 @@ pub fn add_style_to_attributes(value: JsValue, attr_name: String, element: &mut 
         .values()
         .into_iter()
         .filter_map(Result::ok)
+        .map(|value| {
+            let prop: js_sys::Array = value.into();
+            let value = prop.pop();
+            let key = prop.pop();
+            [key, value]
+        })
+        .filter(|[_, v]| !v.is_null())
         .map(map_style_to_css)
         .collect::<Vec<String>>()
         .join(";");
-    let attr_value = format!("{}", attr_value);
-    element.attributes.insert(attr_name, attr_value);
+    if attr_value != "" {
+        element.attributes.insert(attr_name, attr_value);
+    }
 }
 
-fn map_style_to_css(value: JsValue) -> String {
-    let prop: js_sys::Array = value.into();
-    let value = prop.pop();
-    let key = prop.pop();
+fn map_style_to_css([key, value]: [JsValue; 2]) -> String {
     let mut css_prop: String = key.unchecked_into::<JsString>().into();
     let is_custom_css_prop = css_prop.starts_with("--");
     css_prop = if is_custom_css_prop {
