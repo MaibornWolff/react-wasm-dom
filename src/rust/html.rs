@@ -51,7 +51,16 @@ impl fmt::Display for HTMLValue {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Self::Element(element) => write!(f, "{}", element),
-            Self::Text(text) => write!(f, "{}", text),
+            Self::Text(text) => {
+                let escaped_text = text
+                    .replace("&", "&amp;")
+                    .replace("\"", "&quot;")
+                    .replace("'", "&#x27;")
+                    .replace(">", "&gt;")
+                    .replace("<", "&lt;");
+                write!(f, "{}", escaped_text)?;
+                Ok(())
+            }
             Self::Comment => write!(f, "<!-- -->"),
         }
     }

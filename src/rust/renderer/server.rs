@@ -125,7 +125,17 @@ fn render_intrinsic(
                 add_style_to_attributes(value, attr_name, &mut element);
             }
             _ => {
-                let attr_value: String = value.unchecked_into::<JsString>().into();
+                let attr_value: String = if let Some(attr_value) = value.dyn_ref::<JsString>() {
+                    attr_value.into()
+                } else if let Ok(attr_value) = value.dyn_into::<js_sys::Number>() {
+                    attr_value.to_string(10)?.into()
+                } else {
+                    web_sys::console::error_2(
+                        &"attribute must either be string or number on intrinsic element:".into(),
+                        &attr_name.into(),
+                    );
+                    panic!();
+                };
                 element.attributes.insert(attr_name, attr_value);
             }
         }
@@ -204,22 +214,29 @@ fn render_intrinsic_to_string(
     web_sys::console::log_2(&"RENDER_INTRINSIC".into(), &js_val);
     match js_val.dyn_ref::<JsString>() {
         Some(js_string) => {
-            let s: String = js_string.into();
-
-            if *append_empty_comment {
-                render_empty_comment(&mut parent);
+            render_text(js_string, &mut parent, append_empty_comment);
+        }
+        None => match js_val.dyn_ref::<js_sys::Number>() {
+            Some(js_number) => {
+                render_text(&js_number.to_string(10)?, &mut parent, append_empty_comment);
             }
-            render_text_component(&mut parent, s);
-            *append_empty_comment = true;
-        }
-        None => {
-            #[cfg(debug_assertions)]
-            web_sys::console::log_2(&"RENDER_INTRINSIC NONE".into(), &js_val);
-            let jsx = js_val.unchecked_ref::<Jsx>();
-            parent = render_jsx_to_string(Some(parent), jsx, is_static, is_root)?.unwrap();
-        }
+            None => {
+                let jsx = js_val.unchecked_ref::<Jsx>();
+                parent = render_jsx_to_string(Some(parent), jsx, is_static, is_root)?.unwrap();
+            }
+        },
     };
     Ok(Some(parent))
+}
+
+fn render_text(js_string: &JsString, parent: &mut HTMLElement, append_empty_comment: &mut bool) {
+    let s: String = js_string.into();
+
+    if *append_empty_comment {
+        render_empty_comment(parent);
+    }
+    render_text_component(parent, s);
+    *append_empty_comment = true;
 }
 
 fn render_empty_comment(parent: &mut HTMLElement) {
