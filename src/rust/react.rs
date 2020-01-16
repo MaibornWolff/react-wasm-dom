@@ -14,4 +14,5 @@ pub enum ReactComponent {
     Class(Component, JsValue, JsValue),
     Functional(js_sys::Function),
     Intrinsic(String),
+    Fragment(Option<js_sys::Object>),
 }

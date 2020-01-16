@@ -2,6 +2,7 @@ use crate::{
     html::{HTMLElement, HTMLValue},
     jsx::{Jsx, JsxProps},
     react::{React, ReactComponent},
+    react_is::ReactIs,
     renderer::css::add_style_to_attributes,
 };
 
@@ -11,21 +12,35 @@ use wasm_bindgen::{prelude::*, JsCast};
 
 #[wasm_bindgen(js_name = renderToStaticMarkup)]
 #[allow(dead_code)]
-pub fn render_to_static_markup(react: &React, jsx: JsValue) -> Result<String, JsValue> {
-    render_server_side(react, jsx, true)
+pub fn render_to_static_markup(
+    react: &React,
+    react_is: &ReactIs,
+    jsx: JsValue,
+) -> Result<String, JsValue> {
+    render_server_side(react, react_is, jsx, true)
 }
 
 #[wasm_bindgen(js_name = renderToString)]
 #[allow(dead_code)]
-pub fn render_to_string(react: &React, jsx: JsValue) -> Result<String, JsValue> {
-    render_server_side(react, jsx, false)
+pub fn render_to_string(
+    react: &React,
+    react_is: &ReactIs,
+    jsx: JsValue,
+) -> Result<String, JsValue> {
+    render_server_side(react, react_is, jsx, false)
 }
 
-pub fn render_server_side(react: &React, jsx: JsValue, is_static: bool) -> Result<String, JsValue> {
+pub fn render_server_side(
+    react: &React,
+    react_is: &ReactIs,
+    jsx: JsValue,
+    is_static: bool,
+) -> Result<String, JsValue> {
     if react.is_valid_element(&jsx) {
         let jsx = jsx.unchecked_ref::<Jsx>();
 
-        let html = render_jsx_to_string(None, jsx, js_sys::Object::new(), is_static, true)?;
+        let html =
+            render_jsx_to_string(react_is, None, jsx, js_sys::Object::new(), is_static, true)?;
 
         match html {
             Some(html) => Ok(format!("{}", html)),
@@ -54,7 +69,8 @@ pub fn render_server_side(react: &React, jsx: JsValue, is_static: bool) -> Resul
 }
 
 fn render_jsx_to_string(
-    parent: Option<HTMLElement>,
+    react_is: &ReactIs,
+    mut parent: Option<HTMLElement>,
     jsx: &Jsx,
     mut context: js_sys::Object,
     is_static: bool,
@@ -63,7 +79,7 @@ fn render_jsx_to_string(
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"JSX".into(), &jsx);
 
-    match jsx.get_component(&context)? {
+    match jsx.get_component(react_is, &context)? {
         ReactComponent::Class(component, _context_types, child_context_types) => {
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"CLASS".into(), &component);
@@ -83,7 +99,14 @@ fn render_jsx_to_string(
             if jsx.is_null() {
                 Ok(parent)
             } else {
-                render_jsx_to_string(parent, jsx.unchecked_ref(), context, is_static, is_root)
+                render_jsx_to_string(
+                    react_is,
+                    parent,
+                    jsx.unchecked_ref(),
+                    context,
+                    is_static,
+                    is_root,
+                )
             }
         }
         ReactComponent::Functional(function) => {
@@ -95,18 +118,54 @@ fn render_jsx_to_string(
             if jsx.is_null() {
                 Ok(parent)
             } else {
-                render_jsx_to_string(parent, jsx.unchecked_ref(), context, is_static, is_root)
+                render_jsx_to_string(
+                    react_is,
+                    parent,
+                    jsx.unchecked_ref(),
+                    context,
+                    is_static,
+                    is_root,
+                )
             }
         }
         ReactComponent::Intrinsic(intrinsic) => {
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
-            render_intrinsic(parent, intrinsic, jsx, context, is_static, is_root)
+            render_intrinsic(
+                react_is, parent, intrinsic, jsx, context, is_static, is_root,
+            )
+        }
+        ReactComponent::Fragment(children) => {
+            if let Some(children) = children {
+                if let Some(children) = children.dyn_ref::<js_sys::Array>() {
+                    for child in children.values() {
+                        parent = render_jsx_to_string(
+                            react_is,
+                            parent,
+                            child?.unchecked_ref(),
+                            context.clone(),
+                            is_static,
+                            is_root,
+                        )?;
+                    }
+                } else {
+                    parent = render_jsx_to_string(
+                        react_is,
+                        parent,
+                        children.unchecked_ref(),
+                        context,
+                        is_static,
+                        is_root,
+                    )?;
+                }
+            }
+            Ok(parent)
         }
     }
 }
 
 fn render_intrinsic(
+    react_is: &ReactIs,
     parent: Option<HTMLElement>,
     intrinsic: String,
     jsx: &Jsx,
@@ -173,6 +232,7 @@ fn render_intrinsic(
         if let Some(children) = children.dyn_ref::<js_sys::Array>() {
             for child in children.values() {
                 element = render_intrinsic_to_string(
+                    react_is,
                     element.unwrap(),
                     child?.into(),
                     context.clone(),
@@ -183,6 +243,7 @@ fn render_intrinsic(
             }
         } else {
             element = render_intrinsic_to_string(
+                react_is,
                 element.unwrap(),
                 children,
                 context,
@@ -220,6 +281,7 @@ fn handle_poisoned_has_own_property(jsx: &Jsx) {
 }
 
 fn render_intrinsic_to_string(
+    react_is: &ReactIs,
     mut parent: HTMLElement,
     js_val: js_sys::Object,
     context: js_sys::Object,
@@ -240,6 +302,7 @@ fn render_intrinsic_to_string(
             None => {
                 if js_val.is_truthy() {
                     parent = render_jsx_to_string(
+                        react_is,
                         Some(parent),
                         js_val.unchecked_ref(),
                         context,

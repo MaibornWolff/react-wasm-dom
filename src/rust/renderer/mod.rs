@@ -28,7 +28,7 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Option<Element>, JsValue
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"RENDER".into(), jsx);
 
-    match jsx.get_component(&JsValue::NULL)? {
+    match jsx.get_component(JsValue::NULL.unchecked_ref(), &JsValue::NULL)? {
         ReactComponent::Class(component, _, _) => {
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"CLASS COMPONENT".into(), &component);
@@ -71,6 +71,7 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Option<Element>, JsValue
             }
             Ok(Some(element))
         }
+        ReactComponent::Fragment(_) => unimplemented!(),
     }
 }
 

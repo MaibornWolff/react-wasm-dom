@@ -7,6 +7,12 @@ export class Body extends React.Component {
       <p>
         <p>App mounted</p>
         <Lorem />
+        <>
+          <div>Fragment1</div>
+          <div>Fragment2</div>
+          <div>Fragment3</div>
+          <div>Fragment4</div>
+        </>
       </p>
     );
   }

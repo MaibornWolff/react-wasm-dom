@@ -16,4 +16,5 @@ mod component;
 mod html;
 mod jsx;
 mod react;
+mod react_is;
 mod renderer;

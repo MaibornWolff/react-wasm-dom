@@ -1,4 +1,5 @@
 import * as React from "react";
+import * as ReactIs from "react-is";
 import * as express from "express";
 import * as fs from "fs";
 import * as path from "path";
@@ -15,7 +16,7 @@ const index: string[] = fs
 
 import("../../../../pkg/server").then(module => {
   app.get("/", (_req: express.Request, res: express.Response) => {
-    const renderedHtml = module.renderToString(React, <App />);
+    const renderedHtml = module.renderToString(React, ReactIs, <App />);
     const html = index[0] + renderedHtml + index[1];
     res.send(html);
   });

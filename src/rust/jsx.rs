@@ -1,4 +1,4 @@
-use crate::{component::ComponentConstructor, react::ReactComponent};
+use crate::{component::ComponentConstructor, react::ReactComponent, react_is::ReactIs};
 
 use js_sys::{Array, Function, Reflect};
 use wasm_bindgen::{prelude::*, JsCast};
@@ -23,7 +23,11 @@ extern "C" {
 }
 
 impl Jsx {
-    pub fn get_component(&self, context: &JsValue) -> Result<ReactComponent, JsValue> {
+    pub fn get_component(
+        &self,
+        react_is: &ReactIs,
+        context: &JsValue,
+    ) -> Result<ReactComponent, JsValue> {
         if self.jsx_type().is_function() {
             let function: Function = self.jsx_type().unchecked_into();
             let proto = Reflect::get(&function, &"prototype".into())?;
@@ -36,6 +40,10 @@ impl Jsx {
             }
         } else if let Some(intrinsic) = self.jsx_type().as_string() {
             Ok(ReactComponent::Intrinsic(intrinsic))
+        } else if react_is.is_fragment(self) {
+            Ok(ReactComponent::Fragment(
+                self.props().unchecked_ref::<JsxProps>().children(),
+            ))
         } else {
             Err("bad jsx value".into())
         }
