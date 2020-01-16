@@ -92,7 +92,11 @@ fn render_jsx_to_string(
             let jsx = function
                 .call2(&JsValue::NULL, &jsx.props(), &context)
                 .expect("Functional Component initialization failed");
-            render_jsx_to_string(parent, jsx.unchecked_ref(), context, is_static, is_root)
+            if jsx.is_null() {
+                Ok(parent)
+            } else {
+                render_jsx_to_string(parent, jsx.unchecked_ref(), context, is_static, is_root)
+            }
         }
         ReactComponent::Intrinsic(intrinsic) => {
             #[cfg(debug_assertions)]
@@ -110,9 +114,6 @@ fn render_intrinsic(
     is_static: bool,
     is_root: bool,
 ) -> Result<Option<HTMLElement>, JsValue> {
-    #[cfg(debug_assertions)]
-    web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
-
     if Reflect::get(&jsx.props(), &"hasOwnProperty".into())?.is_function() {
         if jsx.props().has_own_property(&"style".into()) {
             check_style_prop(jsx)?;
@@ -137,21 +138,19 @@ fn render_intrinsic(
                 add_style_to_attributes(value, attr_name, &mut element);
             }
             _ => {
-                let attr_value: String = if let Some(attr_value) = value.dyn_ref::<JsString>() {
-                    attr_value.into()
-                } else if let Some(attr_value) = value.dyn_ref::<js_sys::Number>() {
-                    attr_value.to_string(10)?.into()
-                } else if let Some(attr_value) = value.dyn_ref::<js_sys::Object>() {
-                    attr_value.to_string().into()
-                } else {
-                    web_sys::console::error_2(
-                        &"attribute must either be string, number or object on intrinsic element:"
-                            .into(),
-                        &attr_name.into(),
-                    );
-                    panic!();
-                };
-                element.attributes.insert(attr_name, attr_value);
+                let attr_value: Option<String> =
+                    if let Some(attr_value) = value.dyn_ref::<JsString>() {
+                        Some(attr_value.into())
+                    } else if let Some(attr_value) = value.dyn_ref::<js_sys::Number>() {
+                        Some(attr_value.to_string(10)?.into())
+                    } else if let Some(attr_value) = value.dyn_ref::<js_sys::Object>() {
+                        Some(attr_value.to_string().into())
+                    } else {
+                        None
+                    };
+                if let Some(attr_value) = attr_value {
+                    element.attributes.insert(attr_name, attr_value);
+                }
             }
         }
     }
@@ -239,9 +238,16 @@ fn render_intrinsic_to_string(
                 render_text(&js_number.to_string(10)?, &mut parent, append_empty_comment);
             }
             None => {
-                let jsx = js_val.unchecked_ref::<Jsx>();
-                parent =
-                    render_jsx_to_string(Some(parent), jsx, context, is_static, is_root)?.unwrap();
+                if js_val.is_truthy() {
+                    parent = render_jsx_to_string(
+                        Some(parent),
+                        js_val.unchecked_ref(),
+                        context,
+                        is_static,
+                        is_root,
+                    )?
+                    .unwrap();
+                }
             }
         },
     };
