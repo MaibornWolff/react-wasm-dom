@@ -25,7 +25,7 @@ pub fn render_server_side(react: &React, jsx: JsValue, is_static: bool) -> Resul
     if react.is_valid_element(&jsx) {
         let jsx = jsx.unchecked_ref::<Jsx>();
 
-        let html = render_jsx_to_string(None, jsx, is_static, true)?;
+        let html = render_jsx_to_string(None, jsx, js_sys::Object::new(), is_static, true)?;
 
         match html {
             Some(html) => Ok(format!("{}", html)),
@@ -56,14 +56,17 @@ pub fn render_server_side(react: &React, jsx: JsValue, is_static: bool) -> Resul
 fn render_jsx_to_string(
     parent: Option<HTMLElement>,
     jsx: &Jsx,
+    mut context: js_sys::Object,
     is_static: bool,
     is_root: bool,
 ) -> Result<Option<HTMLElement>, JsValue> {
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"JSX".into(), &jsx);
 
-    match jsx.get_component()? {
-        ReactComponent::Class(component) => {
+    match jsx.get_component(&context)? {
+        ReactComponent::Class(component, _context_types, child_context_types) => {
+            #[cfg(debug_assertions)]
+            web_sys::console::log_2(&"CLASS".into(), &component);
             let obj = component.unchecked_ref::<js_sys::Object>();
             let proto = js_sys::Object::get_prototype_of(obj);
             if proto.has_own_property(&"componentWillMount".into()) {
@@ -72,21 +75,29 @@ fn render_jsx_to_string(
                 component.unsafe_component_will_mount();
             }
             let jsx = component.render();
+            context = if child_context_types.is_truthy() {
+                js_sys::Object::assign(&context, &component.get_child_context())
+            } else {
+                context
+            };
             if jsx.is_null() {
                 Ok(parent)
             } else {
-                render_jsx_to_string(parent, jsx.unchecked_ref::<Jsx>(), is_static, is_root)
+                render_jsx_to_string(parent, jsx.unchecked_ref(), context, is_static, is_root)
             }
         }
         ReactComponent::Functional(function) => {
-            let jsx: Jsx = function
-                .call0(&JsValue::NULL)
-                .expect("Functional Component initialization failed")
-                .unchecked_into();
-            render_jsx_to_string(parent, &jsx, is_static, is_root)
+            #[cfg(debug_assertions)]
+            web_sys::console::log_2(&"FUNCTIONAL".into(), &function);
+            let jsx = function
+                .call2(&JsValue::NULL, &jsx.props(), &context)
+                .expect("Functional Component initialization failed");
+            render_jsx_to_string(parent, jsx.unchecked_ref(), context, is_static, is_root)
         }
         ReactComponent::Intrinsic(intrinsic) => {
-            render_intrinsic(parent, intrinsic, jsx, is_static, is_root)
+            #[cfg(debug_assertions)]
+            web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
+            render_intrinsic(parent, intrinsic, jsx, context, is_static, is_root)
         }
     }
 }
@@ -95,6 +106,7 @@ fn render_intrinsic(
     parent: Option<HTMLElement>,
     intrinsic: String,
     jsx: &Jsx,
+    context: js_sys::Object,
     is_static: bool,
     is_root: bool,
 ) -> Result<Option<HTMLElement>, JsValue> {
@@ -164,6 +176,7 @@ fn render_intrinsic(
                 element = render_intrinsic_to_string(
                     element.unwrap(),
                     child?.into(),
+                    context.clone(),
                     is_static,
                     false,
                     &mut append_empty_comment,
@@ -173,6 +186,7 @@ fn render_intrinsic(
             element = render_intrinsic_to_string(
                 element.unwrap(),
                 children,
+                context,
                 is_static,
                 false,
                 &mut false,
@@ -209,6 +223,7 @@ fn handle_poisoned_has_own_property(jsx: &Jsx) {
 fn render_intrinsic_to_string(
     mut parent: HTMLElement,
     js_val: js_sys::Object,
+    context: js_sys::Object,
     is_static: bool,
     is_root: bool,
     append_empty_comment: &mut bool,
@@ -225,7 +240,8 @@ fn render_intrinsic_to_string(
             }
             None => {
                 let jsx = js_val.unchecked_ref::<Jsx>();
-                parent = render_jsx_to_string(Some(parent), jsx, is_static, is_root)?.unwrap();
+                parent =
+                    render_jsx_to_string(Some(parent), jsx, context, is_static, is_root)?.unwrap();
             }
         },
     };
