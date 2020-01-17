@@ -1,5 +1,3 @@
-cargo-features = ["profile-overrides"]
-
 [package]
 authors = ["Mario Reder <mario.reder@maibornwolff.de>"]
 categories = ["wasm", "react", "react-dom"]
@@ -54,5 +52,5 @@ lto = true
 codegen-units = 1
 opt-level = 3
 
-[profile.release.overrides."*"]
+[profile.release.package."*"]
 opt-level = 3
