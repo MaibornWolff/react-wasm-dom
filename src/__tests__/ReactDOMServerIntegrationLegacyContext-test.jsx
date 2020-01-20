@@ -13,6 +13,7 @@ const ReactDOMServerIntegrationUtils = require('../utils/ReactDOMServerIntegrati
 
 let PropTypes;
 let React;
+let ReactIs;
 let ReactDOM;
 let ReactDOMServer;
 let ReactTestUtils;
@@ -22,6 +23,7 @@ function initModules() {
   jest.resetModuleRegistry();
   PropTypes = require('prop-types');
   React = require('react');
+  ReactIs = require('react-is');
   ReactDOM = require('react-dom');
   // ReactDOMServer = require('react-dom/server');
   ReactDOMServer = require('../../pkg/server');
@@ -72,6 +74,7 @@ describe('ReactDOMServerIntegration', () => {
 
       const res = ReactDOMServer.renderToString(
         React,
+        ReactIs,
         <PurpleContext>
           <ClassChildWithContext />
         </PurpleContext>,
@@ -87,6 +90,7 @@ describe('ReactDOMServerIntegration', () => {
 
       const res = ReactDOMServer.renderToString(
         React,
+        ReactIs,
         <PurpleContext>
           <FunctionChildWithContext />
         </PurpleContext>,
@@ -104,6 +108,7 @@ describe('ReactDOMServerIntegration', () => {
 
       const res = ReactDOMServer.renderToString(
         React,
+        ReactIs,
         <PurpleContext>
           <ClassChildWithoutContext />
         </PurpleContext>,
@@ -169,6 +174,7 @@ describe('ReactDOMServerIntegration', () => {
 
       const res = ReactDOMServer.renderToString(
         React,
+        ReactIs,
         <PurpleContext>
           <Child />
         </PurpleContext>,
@@ -184,6 +190,7 @@ describe('ReactDOMServerIntegration', () => {
 
       const res = ReactDOMServer.renderToString(
         React,
+        ReactIs,
         <PurpleContext>
           <RedContext>
             <Grandchild />
@@ -227,7 +234,7 @@ describe('ReactDOMServerIntegration', () => {
         text2: PropTypes.string,
       };
 
-      const res = ReactDOMServer.renderToString(React, <Parent />);
+      const res = ReactDOMServer.renderToString(React, ReactIs, <Parent />);
       expect(res).toBe('<div data-reactroot=\"\"><div id="first">purple</div><div id="second">red</div></div>');
     });
 

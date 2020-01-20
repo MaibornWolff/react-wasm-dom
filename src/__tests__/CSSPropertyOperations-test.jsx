@@ -10,6 +10,7 @@
 'use strict';
 
 const React = require('react');
+const ReactIs = require('react-is');
 const ReactDOM = require('react-dom');
 // const ReactDOMServer = require('react-dom/server');
 const ReactDOMServer = require('../../pkg/server');
@@ -23,7 +24,7 @@ describe('CSSPropertyOperations', () => {
       padding: '4px',
     };
     const div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(React, div);
+    const html = ReactDOMServer.renderToString(React, ReactIs, div);
     expect(html).toContain('"left:0;margin:16px;opacity:0.5;padding:4px"');
   });
 
@@ -34,7 +35,7 @@ describe('CSSPropertyOperations', () => {
       right: ' 4 ',
     };
     const div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(React, div);
+    const html = ReactDOMServer.renderToString(React, ReactIs, div);
     expect(html).toContain('"left:16;opacity:0.5;right:4"');
   });
 
@@ -44,7 +45,7 @@ describe('CSSPropertyOperations', () => {
       opacity: 0.5,
     };
     const div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(React, div);
+    const html = ReactDOMServer.renderToString(React, ReactIs, div);
     expect(html).toContain('"flex:0;opacity:0.5"');
   });
 
@@ -54,7 +55,7 @@ describe('CSSPropertyOperations', () => {
       MozTransition: 'none',
     };
     const div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(React, div);
+    const html = ReactDOMServer.renderToString(React, ReactIs, div);
     expect(html).toContain('"-ms-transition:none;-moz-transition:none"');
   });
 
@@ -63,7 +64,7 @@ describe('CSSPropertyOperations', () => {
       '--someColor': '#000000',
     };
     const div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(React, div);
+    const html = ReactDOMServer.renderToString(React, ReactIs, div);
     expect(html).toContain('"--someColor:#000000"');
   });
 
@@ -73,7 +74,7 @@ describe('CSSPropertyOperations', () => {
       display: 'none',
     };
     let div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(React, div);
+    const html = ReactDOMServer.renderToString(React, ReactIs, div);
     expect(/style=".*"/.test(html)).toBe(true);
   });
 
@@ -83,7 +84,7 @@ describe('CSSPropertyOperations', () => {
       display: null,
     };
     const div = <div style={styles} />;
-    const html = ReactDOMServer.renderToString(React, div);
+    const html = ReactDOMServer.renderToString(React, ReactIs, div);
     expect(/style=/.test(html)).toBe(false);
   });
 
@@ -249,7 +250,7 @@ describe('CSSPropertyOperations', () => {
       }
     }
 
-    const html = ReactDOMServer.renderToString(React, <Comp />);
+    const html = ReactDOMServer.renderToString(React, ReactIs, <Comp />);
 
     expect(html).toContain('--foo:5');
   });

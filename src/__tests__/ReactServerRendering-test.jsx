@@ -11,6 +11,7 @@
 'use strict';
 
 let React;
+let ReactIs;
 let ReactDOMServer;
 
 function normalizeCodeLocInfo(str) {
@@ -21,20 +22,21 @@ describe('ReactDOMServer', () => {
   beforeEach(() => {
     jest.resetModules();
     React = require('react');
+    ReactIs = require('react-is');
     // ReactDOMServer = require('react-dom/server');
     ReactDOMServer = require('../../pkg/server');
   });
 
   describe('renderToString', () => {
     it('should generate simple markup', () => {
-      const response = ReactDOMServer.renderToString(React, <span>hello world</span>);
+      const response = ReactDOMServer.renderToString(React, ReactIs, <span>hello world</span>);
       expect(response).toMatch(
         new RegExp('<span data-reactroot=""' + '>hello world</span>'),
       );
     });
 
     it('should generate simple markup for self-closing tags', () => {
-      const response = ReactDOMServer.renderToString(React, <img />);
+      const response = ReactDOMServer.renderToString(React, ReactIs, <img />);
       expect(response).toMatch(new RegExp('<img data-reactroot=""' + '/>'));
     });
 
@@ -45,7 +47,7 @@ describe('ReactDOMServer', () => {
         }
       }
 
-      const response = ReactDOMServer.renderToString(React, <NullComponent />);
+      const response = ReactDOMServer.renderToString(React, ReactIs, <NullComponent />);
       expect(response).toBe('');
     });
 
@@ -68,7 +70,7 @@ describe('ReactDOMServer', () => {
         }
       }
 
-      const response = ReactDOMServer.renderToString(React, <Parent />);
+      const response = ReactDOMServer.renderToString(React, ReactIs, <Parent />);
       expect(response).toMatch(
         new RegExp(
           '<div ' +
@@ -129,7 +131,7 @@ describe('ReactDOMServer', () => {
           }
         }
 
-        const response = ReactDOMServer.renderToString(React, <TestComponent />);
+        const response = ReactDOMServer.renderToString(React, ReactIs, <TestComponent />);
 
         expect(response).toMatch(
           new RegExp(
@@ -153,7 +155,7 @@ describe('ReactDOMServer', () => {
 
     it('should throw with silly args', () => {
       expect(
-        ReactDOMServer.renderToString.bind(ReactDOMServer, React, {x: 123}),
+        ReactDOMServer.renderToString.bind(ReactDOMServer, React, ReactIs, {x: 123}),
       ).toThrowError(
         'Objects are not valid as a React child (found: object with keys {x})',
       );
@@ -162,7 +164,7 @@ describe('ReactDOMServer', () => {
     it('should throw prop mapping error for an <iframe /> with invalid props', () => {
       let caughtErr;
       try {
-        ReactDOMServer.renderToString(React, <iframe style="border:none;" />);
+        ReactDOMServer.renderToString(React, ReactIs, <iframe style="border:none;" />);
       } catch (err) {
         caughtErr = err;
       }
@@ -180,6 +182,7 @@ describe('ReactDOMServer', () => {
         () =>
           (html = ReactDOMServer.renderToString(
             React,
+            ReactIs,
             <div hasOwnProperty="poison">
               <span unknown="test" />
             </div>,
@@ -207,7 +210,7 @@ describe('ReactDOMServer', () => {
         }
       }
 
-      const response = ReactDOMServer.renderToStaticMarkup(React, <TestComponent />);
+      const response = ReactDOMServer.renderToStaticMarkup(React, ReactIs, <TestComponent />);
 
       expect(response).toBe('<span><div>inner text</div></span>');
     });
@@ -223,7 +226,7 @@ describe('ReactDOMServer', () => {
         }
       }
 
-      const response = ReactDOMServer.renderToStaticMarkup(React, <TestComponent />);
+      const response = ReactDOMServer.renderToStaticMarkup(React, ReactIs, <TestComponent />);
 
       expect(response).toBe('<span>hello world</span>');
     });
@@ -300,7 +303,7 @@ describe('ReactDOMServer', () => {
 
     it('should throw with silly args', () => {
       expect(
-        ReactDOMServer.renderToStaticMarkup.bind(ReactDOMServer, React, {x: 123}),
+        ReactDOMServer.renderToStaticMarkup.bind(ReactDOMServer, React, ReactIs, {x: 123}),
       ).toThrowError(
         'Objects are not valid as a React child (found: object with keys {x})',
       );

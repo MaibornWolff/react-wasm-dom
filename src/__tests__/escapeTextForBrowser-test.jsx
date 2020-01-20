@@ -10,54 +10,57 @@
  'use strict';
 
 let React;
+let ReactIs;
 let ReactDOMServer;
 
 describe('escapeTextForBrowser', () => {
   beforeEach(() => {
     jest.resetModules();
     React = require('react');
+    ReactIs = require('react-is');
     // ReactDOMServer = require('react-dom/server');
     ReactDOMServer = require('../../pkg/server');
   });
 
   it('ampersand is escaped when passed as text content', () => {
-    const response = ReactDOMServer.renderToString(React, <span>{'&'}</span>);
+    const response = ReactDOMServer.renderToString(React, ReactIs, <span>{'&'}</span>);
     expect(response).toMatch('<span data-reactroot="">&amp;</span>');
   });
 
   it('double quote is escaped when passed as text content', () => {
-    const response = ReactDOMServer.renderToString(React, <span>{'"'}</span>);
+    const response = ReactDOMServer.renderToString(React, ReactIs, <span>{'"'}</span>);
     expect(response).toMatch('<span data-reactroot="">&quot;</span>');
   });
 
   it('single quote is escaped when passed as text content', () => {
-    const response = ReactDOMServer.renderToString(React, <span>{"'"}</span>);
+    const response = ReactDOMServer.renderToString(React, ReactIs, <span>{"'"}</span>);
     expect(response).toMatch('<span data-reactroot="">&#x27;</span>');
   });
 
   it('greater than entity is escaped when passed as text content', () => {
-    const response = ReactDOMServer.renderToString(React, <span>{'>'}</span>);
+    const response = ReactDOMServer.renderToString(React, ReactIs, <span>{'>'}</span>);
     expect(response).toMatch('<span data-reactroot="">&gt;</span>');
   });
 
   it('lower than entity is escaped when passed as text content', () => {
-    const response = ReactDOMServer.renderToString(React, <span>{'<'}</span>);
+    const response = ReactDOMServer.renderToString(React, ReactIs, <span>{'<'}</span>);
     expect(response).toMatch('<span data-reactroot="">&lt;</span>');
   });
 
   it('number is correctly passed as text content', () => {
-    const response = ReactDOMServer.renderToString(React, <span>{42}</span>);
+    const response = ReactDOMServer.renderToString(React, ReactIs, <span>{42}</span>);
     expect(response).toMatch('<span data-reactroot="">42</span>');
   });
 
   it('number is escaped to string when passed as text content', () => {
-    const response = ReactDOMServer.renderToString(React, <img data-attr={42} />);
-    expect(response).toMatch('<img data-reactroot="" data-attr="42"/>');
+    const response = ReactDOMServer.renderToString(React, ReactIs, <img data-attr={42} />);
+    expect(response).toMatch('<img data-attr="42" data-reactroot=""/>');
   });
 
   it('escape text content representing a script tag', () => {
     const response = ReactDOMServer.renderToString(
       React,
+      ReactIs,
       <span>{'<script type=\'\' src=""></script>'}</span>,
     );
     expect(response).toMatch(
