@@ -15,7 +15,6 @@ import('react-wasm-dom/server').then(async (module) => {
 
   app.getLocations().forEach(location => {
     const jsx = app.jsx(location)
-
     suite.add(`ReactWasmDOM#renderToString#loc"${location}"`, () => renderToString(React, ReactIs, jsx))
     suite.add(`ReactDOM#renderToString#loc"${location}"`, () => ReactDOMServer.renderToString(jsx))
   })

@@ -13,6 +13,7 @@ fn set_panic_hook() {
 }
 
 mod component;
+mod constants;
 mod html;
 mod jsx;
 mod react;

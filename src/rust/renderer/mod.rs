@@ -52,7 +52,7 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Option<Element>, JsValue
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
 
-            let element = document.create_element(&intrinsic)?;
+            let element = document.create_element(String::from(intrinsic).as_ref())?;
 
             let props = jsx.props();
             let props = props.unchecked_ref::<JsxProps>();

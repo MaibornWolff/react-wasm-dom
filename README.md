@@ -42,8 +42,7 @@ import("react-wasm-dom/server").then(({ renderToString }) => {
 - Only modern module bundlers are supported. Otherwise the library won't load successfully under Node
 - React must be passed to `renderToString` so that WebAssembly has access to its functions
 
-## Roadmap
+## Performance
 
-- Unit Tests
-- HTML attribute rendering
-- only supports [strict mode](https://reactjs.org/docs/strict-mode.html)
+https://github.com/WebAssembly/interface-types/issues/38
+https://github.com/rustwasm/wasm-bindgen/issues/1386

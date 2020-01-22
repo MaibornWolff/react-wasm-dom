@@ -1,5 +1,6 @@
 use crate::component::Component;
 
+use js_sys::JsString;
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
@@ -13,6 +14,12 @@ extern "C" {
 pub enum ReactComponent {
     Class(Component, JsValue, JsValue),
     Functional(js_sys::Function),
-    Intrinsic(String),
+    Intrinsic(JsString),
     Fragment(Option<js_sys::Object>),
+}
+
+#[wasm_bindgen(module = "/src/js/escapeHtml.js")]
+extern "C" {
+    #[wasm_bindgen(js_name = escapeHtml)]
+    pub fn escape_html(input: &JsString) -> JsString;
 }

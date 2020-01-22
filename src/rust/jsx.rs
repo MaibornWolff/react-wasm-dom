@@ -1,4 +1,6 @@
-use crate::{component::ComponentConstructor, react::ReactComponent, react_is::ReactIs};
+use crate::{
+    component::ComponentConstructor, constants::*, react::ReactComponent, react_is::ReactIs,
+};
 
 use js_sys::{Array, Function, Reflect};
 use wasm_bindgen::{prelude::*, JsCast};
@@ -28,25 +30,29 @@ impl Jsx {
         react_is: &ReactIs,
         context: &JsValue,
     ) -> Result<ReactComponent, JsValue> {
-        if self.jsx_type().is_function() {
-            let function: Function = self.jsx_type().unchecked_into();
-            let proto = Reflect::get(&function, &"prototype".into())?;
-            if !proto.is_undefined()
-                && Reflect::get(&proto, &"isReactComponent".into())?.is_truthy()
-            {
-                self.construct(&function, context)
-            } else {
-                Ok(ReactComponent::Functional(function))
-            }
-        } else if let Some(intrinsic) = self.jsx_type().as_string() {
-            Ok(ReactComponent::Intrinsic(intrinsic))
-        } else if react_is.is_fragment(self) {
-            Ok(ReactComponent::Fragment(
-                self.props().unchecked_ref::<JsxProps>().children(),
-            ))
-        } else {
-            Err("bad jsx value".into())
-        }
+        PROTOTYPE.with(|prototype| {
+            IS_REACT_COMPONENT.with(|is_react_component| {
+                if self.jsx_type().is_function() {
+                    let function: Function = self.jsx_type().unchecked_into();
+                    let proto = Reflect::get(&function, prototype)?;
+                    if !proto.is_undefined()
+                        && Reflect::get(&proto, is_react_component)?.is_truthy()
+                    {
+                        self.construct(&function, context)
+                    } else {
+                        Ok(ReactComponent::Functional(function))
+                    }
+                } else if let Ok(intrinsic) = self.jsx_type().dyn_into() {
+                    Ok(ReactComponent::Intrinsic(intrinsic))
+                } else if react_is.is_fragment(self) {
+                    Ok(ReactComponent::Fragment(
+                        self.props().unchecked_ref::<JsxProps>().children(),
+                    ))
+                } else {
+                    Err("bad jsx value".into())
+                }
+            })
+        })
     }
 
     fn construct(

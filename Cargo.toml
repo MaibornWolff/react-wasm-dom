@@ -14,8 +14,8 @@ crate-type = ["cdylib"]
 path = "src/rust/lib.rs"
 
 [dependencies]
-js-sys = "0.3"
-wasm-bindgen = "0.2"
+js-sys = "=0.3.35"
+wasm-bindgen = "=0.2.58"
 
 # The `console_error_panic_hook` crate provides better debugging of panics by
 # logging them with `console.error`. This is great for development, but requires
@@ -29,7 +29,7 @@ console_error_panic_hook = { version = "0.1", optional = true }
 wee_alloc = { version = "0.4.5", optional = true }
 
 [dependencies.web-sys]
-version = "0.3"
+version = "=0.3.35"
 features = [
   "console",
   "Document",
@@ -52,5 +52,7 @@ lto = true
 codegen-units = 1
 opt-level = 3
 
-[profile.release.package."*"]
-opt-level = 3
+[patch.crates-io]
+js-sys = { git = "http://github.com/tarnadas/wasm-bindgen" }
+wasm-bindgen = { git = "http://github.com/tarnadas/wasm-bindgen" }
+web-sys = { git = "http://github.com/tarnadas/wasm-bindgen" }
