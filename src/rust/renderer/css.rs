@@ -18,6 +18,7 @@ pub fn add_style_to_attributes(
                     [key, value]
                 })
                 .filter(|[_, v]| !v.is_null())
+                .filter(|[_, v]| !v.is_undefined())
                 .map(map_style_to_css)
                 .collect::<js_sys::Array>()
                 .join(semicolon);

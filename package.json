@@ -18,7 +18,7 @@
     "build:wasm:opt:web": "wasm-opt ./pkg/index_bg.wasm -Os -o ./pkg/index_bg.wasm",
     "build:wasm:opt:node": "wasm-opt ./pkg/server_bg.wasm -O3 -o ./pkg/server_bg.wasm",
     "watch": "nodemon ./dist --watch dist -e js,ts,jsx,tsx,json,wasm,html",
-    "test": "jest",
+    "test": "node --experimental-modules ./node_modules/jest/bin/jest.js",
     "test:watch": "npm-run-all --parallel test:watch:js build:wasm:watch",
     "test:watch:js": "jest --watchAll"
   },
@@ -42,7 +42,7 @@
     "babel-jest": "^24.9.0",
     "enzyme": "^3.10.0",
     "enzyme-adapter-react-16": "^1.15.1",
-    "jest": "^24.9.0",
+    "jest": "^25.1.0",
     "npm-run-all": "^4.1.5",
     "react": "^16",
     "react-dom": "^16",

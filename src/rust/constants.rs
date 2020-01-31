@@ -6,7 +6,10 @@ thread_local! {
     pub static REACT_ROOT: JsString = "data-reactroot".into();
     pub static HAS_OWN_PROPERTY: JsString = "hasOwnProperty".into();
     pub static STYLE: JsString = "style".into();
+    pub static CLASS: JsString = "class".into();
+    pub static CLASS_NAME: JsString = "className".into();
     pub static CHILDREN: JsString = "children".into();
+    pub static ON: JsString = "on".into();
     pub static OPEN_TAG: JsString = "<".into();
     pub static CLOSE_TAG: JsString = ">".into();
     pub static SELF_OPEN_TAG: JsString = "</".into();
