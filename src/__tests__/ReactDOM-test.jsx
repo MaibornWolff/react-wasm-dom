@@ -65,4 +65,24 @@ describe('ReactDOMServer', () => {
     let res = ReactDOMServer.renderToString(React, ReactIs, jsx);
     expect(res).toEqual('<div data-reactroot="">1<br/>2</div>')
   });
+
+  it('should reevaluate state on componentWillMount', () => {
+    class Test extends React.Component {
+      state = {
+        value: 'old'
+      }
+      componentWillMount() {
+        this.setState({
+          value: 'new'
+        })
+      }
+      render() {
+        const {value} = this.state
+        return <div>{value}</div>
+      }
+    }
+
+    let res = ReactDOMServer.renderToString(React, ReactIs, <Test />);
+    expect(res).toEqual('<div data-reactroot="">new</div>')
+  });
 });

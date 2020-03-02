@@ -32,6 +32,7 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Option<Element>, JsValue
         JsValue::NULL.unchecked_ref(),
         JsValue::NULL.unchecked_ref(),
         &JsValue::NULL,
+        &JsValue::NULL,
     )? {
         ReactComponent::Class(component, _, _) => {
             #[cfg(debug_assertions)]

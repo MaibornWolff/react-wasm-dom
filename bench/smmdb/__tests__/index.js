@@ -17,9 +17,6 @@ describe('SMMDB', () => {
       const jsx = app.jsx(location)
       
       const expected = ReactDOMServer.renderToString(jsx)
-      const fs = require('fs')
-      fs.writeFileSync('./react.html', expected)
-      fs.writeFileSync('./react-wasm.html', renderToString(React, ReactIs, jsx))
 
       expect(renderToString(React, ReactIs, jsx)).toEqual(expected)
     })

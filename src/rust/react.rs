@@ -36,3 +36,9 @@ extern "C" {
     #[wasm_bindgen(js_name = escapeHtml)]
     pub fn escape_html(input: &JsString) -> JsString;
 }
+
+#[wasm_bindgen(module = "/src/js/ReactUpdater.js")]
+extern "C" {
+    #[wasm_bindgen(getter, js_name = ReactUpdater)]
+    pub fn react_updater() -> JsValue;
+}

@@ -2,7 +2,7 @@ use crate::{
     constants::*,
     html::{HTMLElement, HTMLValue},
     jsx::{Jsx, JsxProps},
-    react::{React, ReactComponent},
+    react::{react_updater, React, ReactComponent},
     react_is::ReactIs,
     renderer::css::add_style_to_attributes,
 };
@@ -17,7 +17,8 @@ pub fn render_to_static_markup(
     react_is: &ReactIs,
     jsx: JsValue,
 ) -> Result<JsString, JsValue> {
-    render_server_side(react, react_is, jsx, true)
+    let updater = react_updater();
+    render_server_side(react, react_is, &updater, jsx, true)
 }
 
 #[wasm_bindgen(js_name = renderToString)]
@@ -27,50 +28,59 @@ pub fn render_to_string(
     react_is: &ReactIs,
     jsx: JsValue,
 ) -> Result<JsString, JsValue> {
-    render_server_side(react, react_is, jsx, false)
+    let updater = react_updater();
+    render_server_side(react, react_is, &updater, jsx, false)
 }
 
 pub fn render_server_side(
     react: &React,
     react_is: &ReactIs,
+    updater: &JsValue,
     jsx: JsValue,
     is_static: bool,
 ) -> Result<JsString, JsValue> {
     if react.is_valid_element(&jsx) {
         let jsx = jsx.unchecked_ref::<Jsx>();
 
-        let html =
-            render_jsx_to_string(react, react_is, None, jsx, Object::new(), is_static, true)?;
+        let html = render_jsx_to_string(
+            react,
+            react_is,
+            updater,
+            None,
+            jsx,
+            Object::new(),
+            is_static,
+            true,
+        )?;
 
         match html {
             Some(html) => Ok(html.render()),
             None => Ok("".into()),
         }
+    } else if jsx.is_object() {
+        let obj = jsx.unchecked_into::<Object>();
+        let mut err =
+            "Objects are not valid as a React child (found: object with keys {".to_string();
+        Object::keys(&obj).for_each(&mut |key, index, _| {
+            if index != 0 {
+                err.push_str(", ");
+            }
+            let key: JsString = key.into();
+            let key: String = key.into();
+            err.push_str(&key);
+        });
+        err.push_str("})");
+        Err(err.into())
     } else {
-        if jsx.is_object() {
-            let obj = jsx.unchecked_into::<Object>();
-            let mut err =
-                "Objects are not valid as a React child (found: object with keys {".to_string();
-            Object::keys(&obj).for_each(&mut |key, index, _| {
-                if index != 0 {
-                    err.push_str(", ");
-                }
-                let key: JsString = key.into();
-                let key: String = key.into();
-                err.push_str(&key);
-            });
-            err.push_str("})");
-            Err(err.into())
-        } else {
-            // TODO print error
-            Err("".into())
-        }
+        // TODO print error
+        Err("".into())
     }
 }
 
 fn render_jsx_to_string(
     react: &React,
     react_is: &ReactIs,
+    updater: &JsValue,
     mut parent: Option<HTMLElement>,
     jsx: &Jsx,
     mut context: Object,
@@ -80,7 +90,7 @@ fn render_jsx_to_string(
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"JSX".into(), &jsx);
 
-    match jsx.get_component(react, react_is, &context)? {
+    match jsx.get_component(react, react_is, updater, &context)? {
         ReactComponent::Class(component, _context_types, child_context_types) => {
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"CLASS".into(), &component);
@@ -106,6 +116,7 @@ fn render_jsx_to_string(
                             render_jsx_to_string(
                                 react,
                                 react_is,
+                                updater,
                                 parent,
                                 jsx.unchecked_ref(),
                                 context,
@@ -131,6 +142,7 @@ fn render_jsx_to_string(
                 render_jsx_to_string(
                     react,
                     react_is,
+                    updater,
                     parent,
                     jsx.unchecked_ref(),
                     context,
@@ -143,7 +155,7 @@ fn render_jsx_to_string(
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
             render_intrinsic(
-                react, react_is, parent, intrinsic, jsx, context, is_static, is_root,
+                react, react_is, updater, parent, intrinsic, jsx, context, is_static, is_root,
             )
         }
         ReactComponent::Fragment(children) => {
@@ -153,6 +165,7 @@ fn render_jsx_to_string(
                         parent = render_jsx_to_string(
                             react,
                             react_is,
+                            updater,
                             parent,
                             child?.unchecked_ref(),
                             context.clone(),
@@ -164,6 +177,7 @@ fn render_jsx_to_string(
                     parent = render_jsx_to_string(
                         react,
                         react_is,
+                        updater,
                         parent,
                         children.unchecked_ref(),
                         context,
@@ -180,6 +194,7 @@ fn render_jsx_to_string(
 fn render_intrinsic(
     react: &React,
     react_is: &ReactIs,
+    updater: &JsValue,
     parent: Option<HTMLElement>,
     intrinsic: JsString,
     jsx: &Jsx,
@@ -272,6 +287,7 @@ fn render_intrinsic(
                                                 element = render_intrinsic_to_string(
                                                     react,
                                                     react_is,
+                                                    updater,
                                                     element.unwrap(),
                                                     child?.into(),
                                                     context.clone(),
@@ -284,6 +300,7 @@ fn render_intrinsic(
                                             element = render_intrinsic_to_string(
                                                 react,
                                                 react_is,
+                                                updater,
                                                 element.unwrap(),
                                                 children,
                                                 context,
@@ -334,6 +351,7 @@ fn handle_poisoned_has_own_property(jsx: &Jsx) {
 fn render_intrinsic_to_string(
     react: &React,
     react_is: &ReactIs,
+    updater: &JsValue,
     mut parent: HTMLElement,
     js_val: Object,
     context: Object,
@@ -357,6 +375,7 @@ fn render_intrinsic_to_string(
                     parent = render_jsx_to_string(
                         react,
                         react_is,
+                        updater,
                         Some(parent),
                         js_val.unchecked_ref(),
                         context,

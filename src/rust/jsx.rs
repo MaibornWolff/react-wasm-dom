@@ -32,6 +32,7 @@ impl Jsx {
         &self,
         react: &React,
         react_is: &ReactIs,
+        updater: &JsValue,
         context: &JsValue,
     ) -> Result<ReactComponent, JsValue> {
         PROTOTYPE.with(|prototype| {
@@ -56,12 +57,12 @@ impl Jsx {
                         let child_context_types = constructor.child_context_types();
                         let component = Reflect::construct(
                             &react_type.unchecked_into(),
-                            &Array::of2(&self.props(), context),
+                            &Array::of3(&self.props(), context, updater),
                         )?;
                         if react_is.is_element(&component) {
                             component
                                 .unchecked_into::<Jsx>()
-                                .get_component(react, react_is, context)
+                                .get_component(react, react_is, updater, context)
                         } else {
                             Ok(ReactComponent::Class(
                                 component.unchecked_into(),
