@@ -7,13 +7,26 @@ use wasm_bindgen::prelude::*;
 extern "C" {
     pub type React;
 
+    pub type ReactElement;
+
+    #[wasm_bindgen(method, js_name = createElement)]
+    pub fn create_element(
+        react: &React,
+        react_type: &JsValue,
+        props: &JsValue,
+        children: &JsValue,
+    ) -> ReactElement;
+
     #[wasm_bindgen(method, js_name = isValidElement)]
     pub fn is_valid_element(react: &React, obj: &JsValue) -> bool;
+
+    #[wasm_bindgen(method, getter, js_name = type)]
+    pub fn get_type(react_element: &ReactElement) -> JsValue;
 }
 
 pub enum ReactComponent {
     Class(Component, JsValue, JsValue),
-    Functional(js_sys::Function),
+    Functional(ReactElement),
     Intrinsic(JsString),
     Fragment(Option<js_sys::Object>),
 }

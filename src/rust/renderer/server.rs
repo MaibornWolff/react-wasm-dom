@@ -39,7 +39,8 @@ pub fn render_server_side(
     if react.is_valid_element(&jsx) {
         let jsx = jsx.unchecked_ref::<Jsx>();
 
-        let html = render_jsx_to_string(react_is, None, jsx, Object::new(), is_static, true)?;
+        let html =
+            render_jsx_to_string(react, react_is, None, jsx, Object::new(), is_static, true)?;
 
         match html {
             Some(html) => Ok(html.render()),
@@ -68,6 +69,7 @@ pub fn render_server_side(
 }
 
 fn render_jsx_to_string(
+    react: &React,
     react_is: &ReactIs,
     mut parent: Option<HTMLElement>,
     jsx: &Jsx,
@@ -78,50 +80,56 @@ fn render_jsx_to_string(
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"JSX".into(), &jsx);
 
-    match jsx.get_component(react_is, &context)? {
+    match jsx.get_component(react, react_is, &context)? {
         ReactComponent::Class(component, _context_types, child_context_types) => {
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"CLASS".into(), &component);
-            let obj = component.unchecked_ref::<Object>();
-            let proto = Object::get_prototype_of(obj);
-            COMPONENT_WILL_MOUNT.with(|component_will_mount| {
-                UNSAFE_COMPONENT_WILL_MOUNT.with(|unsafe_component_will_mount| {
-                    if proto.has_own_property(component_will_mount) {
-                        component.component_will_mount();
-                    } else if proto.has_own_property(unsafe_component_will_mount) {
-                        component.unsafe_component_will_mount();
-                    }
-                    let jsx = component.render();
-                    context = if child_context_types.is_truthy() {
-                        Object::assign(&context, &component.get_child_context())
-                    } else {
-                        context
-                    };
-                    if jsx.is_null() {
-                        Ok(parent)
-                    } else {
-                        render_jsx_to_string(
-                            react_is,
-                            parent,
-                            jsx.unchecked_ref(),
-                            context,
-                            is_static,
-                            is_root,
-                        )
-                    }
+            if component.is_null() {
+                Ok(parent)
+            } else {
+                COMPONENT_WILL_MOUNT.with(|component_will_mount| {
+                    UNSAFE_COMPONENT_WILL_MOUNT.with(|unsafe_component_will_mount| {
+                        if js_sys::Reflect::has(&component, &component_will_mount)? {
+                            component.component_will_mount();
+                        } else if js_sys::Reflect::has(&component, &unsafe_component_will_mount)? {
+                            component.unsafe_component_will_mount();
+                        }
+                        let jsx = component.render();
+                        context = if child_context_types.is_truthy() {
+                            Object::assign(&context, &component.get_child_context())
+                        } else {
+                            context
+                        };
+                        if jsx.is_null() {
+                            Ok(parent)
+                        } else {
+                            render_jsx_to_string(
+                                react,
+                                react_is,
+                                parent,
+                                jsx.unchecked_ref(),
+                                context,
+                                is_static,
+                                is_root,
+                            )
+                        }
+                    })
                 })
-            })
+            }
         }
         ReactComponent::Functional(function) => {
             #[cfg(debug_assertions)]
-            web_sys::console::log_2(&"FUNCTIONAL".into(), &function);
+            web_sys::console::log_3(&"FUNCTIONAL".into(), &function, &jsx.props());
             let jsx = function
-                .call2(&JsValue::NULL, &jsx.props(), &context)
+                .get_type()
+                .unchecked_ref::<js_sys::Function>()
+                .call2(&function.get_type(), &jsx.props(), &context)
                 .expect("Functional Component initialization failed");
             if jsx.is_null() {
                 Ok(parent)
             } else {
                 render_jsx_to_string(
+                    react,
                     react_is,
                     parent,
                     jsx.unchecked_ref(),
@@ -135,7 +143,7 @@ fn render_jsx_to_string(
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"INTRINSIC".into(), &intrinsic.clone().into());
             render_intrinsic(
-                react_is, parent, intrinsic, jsx, context, is_static, is_root,
+                react, react_is, parent, intrinsic, jsx, context, is_static, is_root,
             )
         }
         ReactComponent::Fragment(children) => {
@@ -143,6 +151,7 @@ fn render_jsx_to_string(
                 if let Some(children) = children.dyn_ref::<js_sys::Array>() {
                     for child in children.values() {
                         parent = render_jsx_to_string(
+                            react,
                             react_is,
                             parent,
                             child?.unchecked_ref(),
@@ -153,6 +162,7 @@ fn render_jsx_to_string(
                     }
                 } else {
                     parent = render_jsx_to_string(
+                        react,
                         react_is,
                         parent,
                         children.unchecked_ref(),
@@ -168,6 +178,7 @@ fn render_jsx_to_string(
 }
 
 fn render_intrinsic(
+    react: &React,
     react_is: &ReactIs,
     parent: Option<HTMLElement>,
     intrinsic: JsString,
@@ -201,9 +212,10 @@ fn render_intrinsic(
                                         let key = prop?;
                                         let value = Reflect::get(props, &key)?;
                                         let attr_name: JsString = key.unchecked_into();
-                                        if &attr_name == has_own_property || &attr_name == children
+                                        if &attr_name == has_own_property
+                                            || &attr_name == children
+                                            || attr_name.starts_with(on, 0)
                                         {
-                                        } else if attr_name.starts_with(on, 0) {
                                         } else if &attr_name == style {
                                             add_style_to_attributes(
                                                 value,
@@ -258,6 +270,7 @@ fn render_intrinsic(
                                         {
                                             for child in children.values() {
                                                 element = render_intrinsic_to_string(
+                                                    react,
                                                     react_is,
                                                     element.unwrap(),
                                                     child?.into(),
@@ -269,6 +282,7 @@ fn render_intrinsic(
                                             }
                                         } else {
                                             element = render_intrinsic_to_string(
+                                                react,
                                                 react_is,
                                                 element.unwrap(),
                                                 children,
@@ -318,6 +332,7 @@ fn handle_poisoned_has_own_property(jsx: &Jsx) {
 }
 
 fn render_intrinsic_to_string(
+    react: &React,
     react_is: &ReactIs,
     mut parent: HTMLElement,
     js_val: Object,
@@ -340,6 +355,7 @@ fn render_intrinsic_to_string(
                 if js_val.is_truthy() {
                     *append_empty_comment = false;
                     parent = render_jsx_to_string(
+                        react,
                         react_is,
                         Some(parent),
                         js_val.unchecked_ref(),

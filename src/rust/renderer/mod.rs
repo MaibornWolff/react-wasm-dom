@@ -28,7 +28,11 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Option<Element>, JsValue
     #[cfg(debug_assertions)]
     web_sys::console::log_2(&"RENDER".into(), jsx);
 
-    match jsx.get_component(JsValue::NULL.unchecked_ref(), &JsValue::NULL)? {
+    match jsx.get_component(
+        JsValue::NULL.unchecked_ref(),
+        JsValue::NULL.unchecked_ref(),
+        &JsValue::NULL,
+    )? {
         ReactComponent::Class(component, _, _) => {
             #[cfg(debug_assertions)]
             web_sys::console::log_2(&"CLASS COMPONENT".into(), &component);
@@ -41,6 +45,8 @@ fn render_jsx(jsx: &Jsx, document: &Document) -> Result<Option<Element>, JsValue
         }
         ReactComponent::Functional(function) => {
             let jsx: Jsx = function
+                .get_type()
+                .unchecked_ref::<js_sys::Function>()
                 .call0(&JsValue::NULL)
                 .expect("Functional Component initialization failed")
                 .unchecked_into();
