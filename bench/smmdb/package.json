@@ -3,8 +3,11 @@
   "version": "1.0.0",
   "main": "index.js",
   "license": "MIT",
+  "engines": {
+    "node": "==15"
+  },
   "scripts": {
-    "bench": "node --experimental-modules --no-warnings . > result.txt"
+    "bench": "node --experimental-modules --experimental-wasm-reftypes --no-warnings . > result.txt"
   },
   "dependencies": {
     "axios": "^0.18.0",
