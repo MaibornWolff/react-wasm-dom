@@ -15,9 +15,8 @@
   "[typescriptreact]": {
     "editor.formatOnSave": false
   },
-  "eslint.validate": [
-    { "language": "typescript", "autoFix": true },
-    { "language": "typescriptreact", "autoFix": true }
-  ],
-  "stylelint.autoFixOnSave": false
+  "eslint.validate": ["typescript", "typescriptreact"],
+  "stylelint.autoFixOnSave": false,
+  "rust-analyzer.procMacro.enable": true,
+  "rust-analyzer.diagnostics.disabled": ["missing-unsafe"]
 }
