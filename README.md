@@ -46,3 +46,13 @@ import("react-wasm-dom/server").then(({ renderToString }) => {
 
 https://github.com/WebAssembly/interface-types/issues/38
 https://github.com/rustwasm/wasm-bindgen/issues/1386
+
+## Contributing
+
+Install this specific version of wasm-pack:
+
+`cargo install --git https://github.com/Tarnadas/wasm-pack --branch develop`
+
+Compile in production mode:
+
+`yarn build`
