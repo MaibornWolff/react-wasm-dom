@@ -7,6 +7,7 @@ const distServer = path.resolve(dist, "server");
 module.exports = [
   {
     entry: "./src/client/index.tsx",
+    devtool: "eval-cheap-source-map",
     output: {
       path: dist,
       filename: "index.js"
@@ -19,6 +20,9 @@ module.exports = [
     resolve: {
       extensions: [".ts", ".tsx", ".js", ".jsx", ".json", ".wasm"]
     },
+    experiments: {
+      asyncWebAssembly: true
+    },
     module: {
       rules: [
         {
@@ -27,7 +31,7 @@ module.exports = [
           use: [
             {
               loader: "babel-loader",
-              query: {
+              options: {
                 babelrc: false,
                 presets: [
                   [
@@ -65,6 +69,7 @@ module.exports = [
   },
   {
     entry: "./src/server/index.tsx",
+    devtool: "eval-cheap-source-map",
     target: "node",
     node: {
       __dirname: true,
@@ -78,6 +83,9 @@ module.exports = [
       extensions: [".ts", ".tsx", ".js", ".jsx", ".json", ".wasm"]
     },
     externals: [require("webpack-node-externals")()],
+    experiments: {
+      asyncWebAssembly: true
+    },
     module: {
       rules: [
         {
@@ -86,7 +94,7 @@ module.exports = [
           use: [
             {
               loader: "babel-loader",
-              query: {
+              options: {
                 babelrc: false,
                 presets: [
                   [
