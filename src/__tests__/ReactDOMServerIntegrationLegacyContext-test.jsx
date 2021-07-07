@@ -9,7 +9,7 @@
 
 'use strict';
 
-const ReactDOMServerIntegrationUtils = require('../utils/ReactDOMServerIntegrationTestUtils');
+const ReactDOMServerIntegrationUtils = require('./utils/ReactDOMServerIntegrationTestUtils');
 
 let PropTypes;
 let React;

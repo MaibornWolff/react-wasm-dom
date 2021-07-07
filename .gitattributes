@@ -1,2 +1,4 @@
-bench/* -linguist-detectable
-jest* -linguist-detectable
+bench/** -linguist-detectable
+jest/** -linguist-detectable
+jest** -linguist-detectable
+src/__tests__/** -linguist-detectable
